@@ -173,6 +173,11 @@ const ReportPage = () => {
     }
   }, [auth, dataInicio, dataFim, toast]);
 
+  if (!auth) {
+    navigate("/");
+    return null;
+  }
+
   const filteredRecords = records.filter((r) => {
     if (selectedDept !== "all" && r.departamento !== selectedDept) return false;
     if (showOnlyLate && !r.atrasado) return false;
