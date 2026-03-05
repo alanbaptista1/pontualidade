@@ -73,15 +73,15 @@ const ReportPage = () => {
   const [tolerance, setTolerance] = useState<string>("0");
   const [hasSearched, setHasSearched] = useState(false);
 
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate("/");
+  }, [logout, navigate]);
+
   if (!auth) {
     navigate("/");
     return null;
   }
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   const handleSearch = useCallback(async () => {
     if (!dataInicio || !dataFim) {
