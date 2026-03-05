@@ -78,12 +78,8 @@ const ReportPage = () => {
     navigate("/");
   }, [logout, navigate]);
 
-  if (!auth) {
-    navigate("/");
-    return null;
-  }
-
   const handleSearch = useCallback(async () => {
+    if (!auth) return;
     if (!dataInicio || !dataFim) {
       toast({ title: "Preencha as datas", variant: "destructive" });
       return;
