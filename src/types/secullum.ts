@@ -9,7 +9,7 @@ export interface SecullumBank {
 export interface SecullumDepartamento {
   Id: number;
   Descricao: string;
-  Nfolha: string;
+  Nfolha?: string;
 }
 
 export interface SecullumHorarioDia {
