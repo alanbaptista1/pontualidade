@@ -286,6 +286,8 @@ const AnalyticsPage = () => {
     URL.revokeObjectURL(url);
   };
 
+  const pdfOptions = { dataInicio, dataFim, bankName: auth?.bankName || "" };
+
   if (!auth) return null;
 
   return (
