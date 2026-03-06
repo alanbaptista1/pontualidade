@@ -221,7 +221,7 @@ const ReportPage = () => {
                   <Input
                     type="date"
                     value={dataInicio}
-                    onChange={(e) => setDataInicio(e.target.value)}
+                    onChange={(e) => setReportData({ dataInicio: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
