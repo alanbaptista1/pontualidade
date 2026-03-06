@@ -128,7 +128,7 @@ const AnalyticsPage = () => {
     }
 
     setLoading(true);
-    setHasSearched(true);
+    setReportData({ hasSearched: true });
 
     try {
       const funcionarios: SecullumFuncionario[] = await listFuncionarios(auth.token, auth.bankId);
