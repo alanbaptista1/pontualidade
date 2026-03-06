@@ -306,7 +306,7 @@ const AnalyticsPage = () => {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <Label>Data Início</Label>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  <Input type="date" value={dataInicio} onChange={(e) => setReportData({ dataInicio: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Data Fim</Label>
