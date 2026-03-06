@@ -432,28 +432,14 @@ const AnalyticsPage = () => {
               <TabsContent value="employee" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Ranking por Colaborador</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        employeeRanking.map((e) => ({
-                          Colaborador: e.nome,
-                          Setor: e.departamento,
-                          Registros: e.totalRegistros,
-                          Atrasos: e.totalAtrasos,
-                          "% Atraso": e.percentualAtraso,
-                          "Média (min)": e.mediaMinutosAtraso,
-                          "Total (min)": e.totalMinutosAtraso,
-                        })),
-                        "ranking-colaborador"
-                      )
-                    }
-                    disabled={employeeRanking.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateEmployeeRankingPDF(employeeRanking, pdfOptions)} disabled={employeeRanking.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(employeeRanking.map((e) => ({ Colaborador: e.nome, Setor: e.departamento, Registros: e.totalRegistros, Atrasos: e.totalAtrasos, "% Atraso": e.percentualAtraso, "Média (min)": e.mediaMinutosAtraso, "Total (min)": e.totalMinutosAtraso })), "ranking-colaborador")} disabled={employeeRanking.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <Card className="overflow-hidden shadow-[var(--shadow-card)]">
