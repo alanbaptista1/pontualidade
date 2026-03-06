@@ -351,26 +351,14 @@ const AnalyticsPage = () => {
               <TabsContent value="sector" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Ranking por Setor</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        sectorRanking.map((s) => ({
-                          Setor: s.departamento,
-                          Registros: s.totalRegistros,
-                          Atrasos: s.totalAtrasos,
-                          "% Atraso": s.percentualAtraso,
-                          "Média (min)": s.mediaMinutosAtraso,
-                        })),
-                        "ranking-setor"
-                      )
-                    }
-                    disabled={sectorRanking.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateSectorRankingPDF(sectorRanking, pdfOptions)} disabled={sectorRanking.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(sectorRanking.map((s) => ({ Setor: s.departamento, Registros: s.totalRegistros, Atrasos: s.totalAtrasos, "% Atraso": s.percentualAtraso, "Média (min)": s.mediaMinutosAtraso })), "ranking-setor")} disabled={sectorRanking.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 {sectorRanking.length > 0 && (
