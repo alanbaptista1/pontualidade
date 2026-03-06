@@ -158,7 +158,7 @@ const ReportPage = () => {
         }
       }
 
-      setRecords(latenessRecords);
+      setReportData({ records: latenessRecords });
       toast({
         title: "Relatório gerado",
         description: `${latenessRecords.length} registros encontrados.`,
