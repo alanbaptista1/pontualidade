@@ -9,7 +9,7 @@ import {
   CalendarDays,
   Search,
   Loader2,
-  ArrowUpDown,
+  FileText,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,7 +36,12 @@ import type {
   SecullumHorario,
   LatenessRecord,
 } from "@/types/secullum";
-import { generatePDF } from "@/lib/pdf-generator";
+import {
+  generateSectorRankingPDF,
+  generateEmployeeRankingPDF,
+  generateWeekdayTrendPDF,
+  generateRecurrencePDF,
+} from "@/lib/pdf-generator";
 import AppHeader from "@/components/AppHeader";
 import {
   BarChart,
