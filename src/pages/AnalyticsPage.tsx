@@ -569,28 +569,14 @@ const AnalyticsPage = () => {
               <TabsContent value="recurrence" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Recorrência de Atrasos</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        recurrenceList.map((e) => ({
-                          Colaborador: e.nome,
-                          Setor: e.departamento,
-                          "Dias com Atraso": e.totalAtrasos,
-                          "Total Registros": e.totalRegistros,
-                          "% Atraso": e.percentualAtraso,
-                          "Média (min)": e.mediaMinutosAtraso,
-                          "Total (min)": e.totalMinutosAtraso,
-                        })),
-                        "recorrencia-atrasos"
-                      )
-                    }
-                    disabled={recurrenceList.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateRecurrencePDF(recurrenceList, pdfOptions)} disabled={recurrenceList.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(recurrenceList.map((e) => ({ Colaborador: e.nome, Setor: e.departamento, "Dias com Atraso": e.totalAtrasos, "Total Registros": e.totalRegistros, "% Atraso": e.percentualAtraso, "Média (min)": e.mediaMinutosAtraso, "Total (min)": e.totalMinutosAtraso })), "recorrencia-atrasos")} disabled={recurrenceList.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
