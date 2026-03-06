@@ -229,7 +229,7 @@ const ReportPage = () => {
                   <Input
                     type="date"
                     value={dataFim}
-                    onChange={(e) => setDataFim(e.target.value)}
+                    onChange={(e) => setReportData({ dataFim: e.target.value })}
                   />
                 </div>
                 <div className="flex items-end sm:col-span-2 lg:col-span-2">
