@@ -83,7 +83,7 @@ const ReportPage = () => {
     }
 
     setLoading(true);
-    setHasSearched(true);
+    setReportData({ hasSearched: true });
 
     try {
       // 1. List employees
