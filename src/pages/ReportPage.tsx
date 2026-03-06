@@ -97,7 +97,7 @@ const ReportPage = () => {
           deptMap.set(f.Departamento.Id, f.Departamento);
         }
       });
-      setDepartments(Array.from(deptMap.values()));
+      setReportData({ departments: Array.from(deptMap.values()) });
 
       // 2. Fetch horarios (unique)
       const horarioIds = [...new Set(activeFuncs.map((f) => f.Horario?.Numero).filter(Boolean))];
