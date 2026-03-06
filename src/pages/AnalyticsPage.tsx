@@ -184,7 +184,7 @@ const AnalyticsPage = () => {
         }
       }
 
-      setRecords(latenessRecords);
+      setReportData({ records: latenessRecords });
       toast({ title: "Dados carregados", description: `${latenessRecords.length} registros analisados.` });
     } catch (err: any) {
       toast({ title: "Erro ao carregar dados", description: err.message, variant: "destructive" });
