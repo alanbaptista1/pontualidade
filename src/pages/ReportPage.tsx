@@ -62,15 +62,13 @@ const ReportPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const { reportData, setReportData } = useSecullum();
+  const { records, departments, dataInicio, dataFim, hasSearched } = reportData;
+
   const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState<LatenessRecord[]>([]);
-  const [departments, setDepartments] = useState<SecullumDepartamento[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>("all");
   const [showOnlyLate, setShowOnlyLate] = useState(false);
   const [tolerance, setTolerance] = useState<string>("0");
-  const [hasSearched, setHasSearched] = useState(false);
 
   const handleLogout = useCallback(() => {
     logout();
