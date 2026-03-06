@@ -491,26 +491,14 @@ const AnalyticsPage = () => {
               <TabsContent value="trend" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Tendência de Atraso por Dia da Semana</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        weekdayTrends.map((w) => ({
-                          Dia: w.dia,
-                          Registros: w.totalRegistros,
-                          Atrasos: w.totalAtrasos,
-                          "% Atraso": w.percentualAtraso,
-                          "Média (min)": w.mediaMinutosAtraso,
-                        })),
-                        "tendencia-dia-semana"
-                      )
-                    }
-                    disabled={weekdayTrends.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateWeekdayTrendPDF(weekdayTrends, pdfOptions)} disabled={weekdayTrends.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(weekdayTrends.map((w) => ({ Dia: w.dia, Registros: w.totalRegistros, Atrasos: w.totalAtrasos, "% Atraso": w.percentualAtraso, "Média (min)": w.mediaMinutosAtraso })), "tendencia-dia-semana")} disabled={weekdayTrends.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <Card className="shadow-[var(--shadow-card)]">
