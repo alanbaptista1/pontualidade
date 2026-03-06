@@ -206,24 +206,7 @@ const ReportPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Clock className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-foreground">Controle de Pontualidade</h1>
-              <p className="text-xs text-muted-foreground">{auth.bankName}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
         {/* Search Filters */}
