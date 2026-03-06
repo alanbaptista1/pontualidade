@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SecullumProvider } from "@/contexts/SecullumContext";
 import LoginPage from "./pages/LoginPage";
 import ReportPage from "./pages/ReportPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
