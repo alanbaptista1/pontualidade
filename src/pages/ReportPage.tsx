@@ -34,6 +34,7 @@ import type {
 } from "@/types/secullum";
 import LatenessTable from "@/components/LatenessTable";
 import { generatePDF } from "@/lib/pdf-generator";
+import AppHeader from "@/components/AppHeader";
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
