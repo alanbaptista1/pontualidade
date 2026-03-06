@@ -310,7 +310,7 @@ const AnalyticsPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Data Fim</Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  <Input type="date" value={dataFim} onChange={(e) => setReportData({ dataFim: e.target.value })} />
                 </div>
                 <div className="flex items-end sm:col-span-2 lg:col-span-2">
                   <Button onClick={handleSearch} disabled={loading} className="w-full sm:w-auto">
