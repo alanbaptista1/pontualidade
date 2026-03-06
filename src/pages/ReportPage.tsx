@@ -2,16 +2,14 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Clock,
-  LogOut,
-  Download,
-  Filter,
+  CalendarDays,
   Search,
   Loader2,
   AlertTriangle,
   CheckCircle2,
   Users,
-  CalendarDays,
+  Filter,
+  Download,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
