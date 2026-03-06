@@ -62,15 +62,13 @@ const ReportPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const { reportData, setReportData } = useSecullum();
+  const { records, departments, dataInicio, dataFim, hasSearched } = reportData;
+
   const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState<LatenessRecord[]>([]);
-  const [departments, setDepartments] = useState<SecullumDepartamento[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>("all");
   const [showOnlyLate, setShowOnlyLate] = useState(false);
   const [tolerance, setTolerance] = useState<string>("0");
-  const [hasSearched, setHasSearched] = useState(false);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -85,7 +83,7 @@ const ReportPage = () => {
     }
 
     setLoading(true);
-    setHasSearched(true);
+    setReportData({ hasSearched: true });
 
     try {
       // 1. List employees
@@ -99,7 +97,7 @@ const ReportPage = () => {
           deptMap.set(f.Departamento.Id, f.Departamento);
         }
       });
-      setDepartments(Array.from(deptMap.values()));
+      setReportData({ departments: Array.from(deptMap.values()) });
 
       // 2. Fetch horarios (unique)
       const horarioIds = [...new Set(activeFuncs.map((f) => f.Horario?.Numero).filter(Boolean))];
@@ -160,7 +158,7 @@ const ReportPage = () => {
         }
       }
 
-      setRecords(latenessRecords);
+      setReportData({ records: latenessRecords });
       toast({
         title: "Relatório gerado",
         description: `${latenessRecords.length} registros encontrados.`,
@@ -223,7 +221,7 @@ const ReportPage = () => {
                   <Input
                     type="date"
                     value={dataInicio}
-                    onChange={(e) => setDataInicio(e.target.value)}
+                    onChange={(e) => setReportData({ dataInicio: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -231,7 +229,7 @@ const ReportPage = () => {
                   <Input
                     type="date"
                     value={dataFim}
-                    onChange={(e) => setDataFim(e.target.value)}
+                    onChange={(e) => setReportData({ dataFim: e.target.value })}
                   />
                 </div>
                 <div className="flex items-end sm:col-span-2 lg:col-span-2">

@@ -1,19 +1,39 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { AuthState } from "@/types/secullum";
+import type { AuthState, LatenessRecord, SecullumDepartamento } from "@/types/secullum";
+
+interface ReportData {
+  records: LatenessRecord[];
+  departments: SecullumDepartamento[];
+  dataInicio: string;
+  dataFim: string;
+  hasSearched: boolean;
+}
 
 interface SecullumContextType {
   auth: AuthState | null;
   setAuth: (auth: AuthState | null) => void;
   logout: () => void;
+  reportData: ReportData;
+  setReportData: (data: Partial<ReportData>) => void;
 }
 
 const SecullumContext = createContext<SecullumContextType | null>(null);
+
+const defaultReportData: ReportData = {
+  records: [],
+  departments: [],
+  dataInicio: "",
+  dataFim: "",
+  hasSearched: false,
+};
 
 export function SecullumProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState | null>(() => {
     const stored = sessionStorage.getItem("secullum_auth");
     return stored ? JSON.parse(stored) : null;
   });
+
+  const [reportData, setReportDataState] = useState<ReportData>(defaultReportData);
 
   const handleSetAuth = useCallback((newAuth: AuthState | null) => {
     setAuth(newAuth);
@@ -26,10 +46,15 @@ export function SecullumProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     handleSetAuth(null);
+    setReportDataState(defaultReportData);
   }, [handleSetAuth]);
 
+  const setReportData = useCallback((data: Partial<ReportData>) => {
+    setReportDataState((prev) => ({ ...prev, ...data }));
+  }, []);
+
   return (
-    <SecullumContext.Provider value={{ auth, setAuth: handleSetAuth, logout }}>
+    <SecullumContext.Provider value={{ auth, setAuth: handleSetAuth, logout, reportData, setReportData }}>
       {children}
     </SecullumContext.Provider>
   );

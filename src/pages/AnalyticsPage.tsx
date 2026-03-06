@@ -9,7 +9,7 @@ import {
   CalendarDays,
   Search,
   Loader2,
-  ArrowUpDown,
+  FileText,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,7 +36,12 @@ import type {
   SecullumHorario,
   LatenessRecord,
 } from "@/types/secullum";
-import { generatePDF } from "@/lib/pdf-generator";
+import {
+  generateSectorRankingPDF,
+  generateEmployeeRankingPDF,
+  generateWeekdayTrendPDF,
+  generateRecurrencePDF,
+} from "@/lib/pdf-generator";
 import AppHeader from "@/components/AppHeader";
 import {
   BarChart,
@@ -108,14 +113,12 @@ const BAR_COLORS = [
 ];
 
 const AnalyticsPage = () => {
-  const { auth } = useSecullum();
+  const { auth, reportData, setReportData } = useSecullum();
   const { toast } = useToast();
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const { records, dataInicio, dataFim, hasSearched } = reportData;
+
   const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState<LatenessRecord[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async () => {
     if (!auth) return;
@@ -125,7 +128,7 @@ const AnalyticsPage = () => {
     }
 
     setLoading(true);
-    setHasSearched(true);
+    setReportData({ hasSearched: true });
 
     try {
       const funcionarios: SecullumFuncionario[] = await listFuncionarios(auth.token, auth.bankId);
@@ -181,7 +184,7 @@ const AnalyticsPage = () => {
         }
       }
 
-      setRecords(latenessRecords);
+      setReportData({ records: latenessRecords });
       toast({ title: "Dados carregados", description: `${latenessRecords.length} registros analisados.` });
     } catch (err: any) {
       toast({ title: "Erro ao carregar dados", description: err.message, variant: "destructive" });
@@ -283,6 +286,8 @@ const AnalyticsPage = () => {
     URL.revokeObjectURL(url);
   };
 
+  const pdfOptions = { dataInicio, dataFim, bankName: auth?.bankName || "" };
+
   if (!auth) return null;
 
   return (
@@ -303,11 +308,11 @@ const AnalyticsPage = () => {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <Label>Data Início</Label>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  <Input type="date" value={dataInicio} onChange={(e) => setReportData({ dataInicio: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Data Fim</Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  <Input type="date" value={dataFim} onChange={(e) => setReportData({ dataFim: e.target.value })} />
                 </div>
                 <div className="flex items-end sm:col-span-2 lg:col-span-2">
                   <Button onClick={handleSearch} disabled={loading} className="w-full sm:w-auto">
@@ -346,26 +351,14 @@ const AnalyticsPage = () => {
               <TabsContent value="sector" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Ranking por Setor</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        sectorRanking.map((s) => ({
-                          Setor: s.departamento,
-                          Registros: s.totalRegistros,
-                          Atrasos: s.totalAtrasos,
-                          "% Atraso": s.percentualAtraso,
-                          "Média (min)": s.mediaMinutosAtraso,
-                        })),
-                        "ranking-setor"
-                      )
-                    }
-                    disabled={sectorRanking.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateSectorRankingPDF(sectorRanking, pdfOptions)} disabled={sectorRanking.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(sectorRanking.map((s) => ({ Setor: s.departamento, Registros: s.totalRegistros, Atrasos: s.totalAtrasos, "% Atraso": s.percentualAtraso, "Média (min)": s.mediaMinutosAtraso })), "ranking-setor")} disabled={sectorRanking.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 {sectorRanking.length > 0 && (
@@ -439,28 +432,14 @@ const AnalyticsPage = () => {
               <TabsContent value="employee" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Ranking por Colaborador</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        employeeRanking.map((e) => ({
-                          Colaborador: e.nome,
-                          Setor: e.departamento,
-                          Registros: e.totalRegistros,
-                          Atrasos: e.totalAtrasos,
-                          "% Atraso": e.percentualAtraso,
-                          "Média (min)": e.mediaMinutosAtraso,
-                          "Total (min)": e.totalMinutosAtraso,
-                        })),
-                        "ranking-colaborador"
-                      )
-                    }
-                    disabled={employeeRanking.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateEmployeeRankingPDF(employeeRanking, pdfOptions)} disabled={employeeRanking.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(employeeRanking.map((e) => ({ Colaborador: e.nome, Setor: e.departamento, Registros: e.totalRegistros, Atrasos: e.totalAtrasos, "% Atraso": e.percentualAtraso, "Média (min)": e.mediaMinutosAtraso, "Total (min)": e.totalMinutosAtraso })), "ranking-colaborador")} disabled={employeeRanking.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <Card className="overflow-hidden shadow-[var(--shadow-card)]">
@@ -512,26 +491,14 @@ const AnalyticsPage = () => {
               <TabsContent value="trend" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Tendência de Atraso por Dia da Semana</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        weekdayTrends.map((w) => ({
-                          Dia: w.dia,
-                          Registros: w.totalRegistros,
-                          Atrasos: w.totalAtrasos,
-                          "% Atraso": w.percentualAtraso,
-                          "Média (min)": w.mediaMinutosAtraso,
-                        })),
-                        "tendencia-dia-semana"
-                      )
-                    }
-                    disabled={weekdayTrends.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateWeekdayTrendPDF(weekdayTrends, pdfOptions)} disabled={weekdayTrends.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(weekdayTrends.map((w) => ({ Dia: w.dia, Registros: w.totalRegistros, Atrasos: w.totalAtrasos, "% Atraso": w.percentualAtraso, "Média (min)": w.mediaMinutosAtraso })), "tendencia-dia-semana")} disabled={weekdayTrends.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <Card className="shadow-[var(--shadow-card)]">
@@ -602,28 +569,14 @@ const AnalyticsPage = () => {
               <TabsContent value="recurrence" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Recorrência de Atrasos</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportCSV(
-                        recurrenceList.map((e) => ({
-                          Colaborador: e.nome,
-                          Setor: e.departamento,
-                          "Dias com Atraso": e.totalAtrasos,
-                          "Total Registros": e.totalRegistros,
-                          "% Atraso": e.percentualAtraso,
-                          "Média (min)": e.mediaMinutosAtraso,
-                          "Total (min)": e.totalMinutosAtraso,
-                        })),
-                        "recorrencia-atrasos"
-                      )
-                    }
-                    disabled={recurrenceList.length === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateRecurrencePDF(recurrenceList, pdfOptions)} disabled={recurrenceList.length === 0}>
+                      <FileText className="mr-2 h-4 w-4" />PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(recurrenceList.map((e) => ({ Colaborador: e.nome, Setor: e.departamento, "Dias com Atraso": e.totalAtrasos, "Total Registros": e.totalRegistros, "% Atraso": e.percentualAtraso, "Média (min)": e.mediaMinutosAtraso, "Total (min)": e.totalMinutosAtraso })), "recorrencia-atrasos")} disabled={recurrenceList.length === 0}>
+                      <Download className="mr-2 h-4 w-4" />CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
