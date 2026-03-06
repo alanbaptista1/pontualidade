@@ -113,14 +113,12 @@ const BAR_COLORS = [
 ];
 
 const AnalyticsPage = () => {
-  const { auth } = useSecullum();
+  const { auth, reportData, setReportData } = useSecullum();
   const { toast } = useToast();
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const { records, dataInicio, dataFim, hasSearched } = reportData;
+
   const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState<LatenessRecord[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async () => {
     if (!auth) return;
