@@ -35,11 +35,11 @@ import { generatePDF } from "@/lib/pdf-generator";
 import AppHeader from "@/components/AppHeader";
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const HORARIO_CONCURRENCY_LIMIT = 4;
 
 function getDiaSemanaIndex(dateStr: string): number {
   const date = parseISO(dateStr);
-  const jsDay = date.getDay(); // 0=sunday
-  // Secullum: 0=monday ... 6=sunday
+  const jsDay = date.getDay();
   return jsDay === 0 ? 6 : jsDay - 1;
 }
 
@@ -55,6 +55,13 @@ function formatHorarioCompleto(dia: any): string {
   if (dia.Entrada2 && dia.Saida2) parts.push(`${dia.Entrada2} - ${dia.Saida2}`);
   if (dia.Entrada3 && dia.Saida3) parts.push(`${dia.Entrada3} - ${dia.Saida3}`);
   return parts.join(" | ");
+}
+
+async function runWithConcurrency<T>(items: T[], limit: number, worker: (item: T) => Promise<void>) {
+  for (let index = 0; index < items.length; index += limit) {
+    const batch = items.slice(index, index + limit);
+    await Promise.all(batch.map(worker));
+  }
 }
 
 const ReportPage = () => {
@@ -86,11 +93,9 @@ const ReportPage = () => {
     setReportData({ hasSearched: true });
 
     try {
-      // 1. List employees
       const funcionarios: SecullumFuncionario[] = await listFuncionarios(auth.token, auth.bankId);
       const activeFuncs = funcionarios.filter((f) => !f.Demissao && !f.Invisivel);
 
-      // Extract unique departments
       const deptMap = new Map<number, SecullumDepartamento>();
       activeFuncs.forEach((f) => {
         if (f.Departamento) {
@@ -99,20 +104,16 @@ const ReportPage = () => {
       });
       setReportData({ departments: Array.from(deptMap.values()) });
 
-      // 2. Fetch horarios (unique)
       const horarioIds = [...new Set(activeFuncs.map((f) => f.Horario?.Numero).filter(Boolean))];
       const horarioMap = new Map<number, SecullumHorario>();
 
-      // Fetch in batches
-      const horarioPromises = horarioIds.map(async (num) => {
+      await runWithConcurrency(horarioIds, HORARIO_CONCURRENCY_LIMIT, async (num) => {
         const result = await getHorario(auth.token, auth.bankId, num);
         if (Array.isArray(result) && result.length > 0) {
           horarioMap.set(result[0].Numero, result[0]);
         }
       });
-      await Promise.all(horarioPromises);
 
-      // 3. Fetch batidas for all employees
       const allBatidas: SecullumBatida[] = await listBatidas(
         auth.token,
         auth.bankId,
@@ -120,14 +121,20 @@ const ReportPage = () => {
         dataFim
       );
 
-      // 4. Build lateness records
+      const batidasByFuncionario = new Map<number, SecullumBatida[]>();
+      allBatidas.forEach((batida) => {
+        const current = batidasByFuncionario.get(batida.FuncionarioId) ?? [];
+        current.push(batida);
+        batidasByFuncionario.set(batida.FuncionarioId, current);
+      });
+
       const latenessRecords: LatenessRecord[] = [];
 
       for (const func of activeFuncs) {
         const horario = horarioMap.get(func.Horario?.Numero);
         if (!horario?.Dias) continue;
 
-        const funcBatidas = allBatidas.filter((b) => b.FuncionarioId === func.Id);
+        const funcBatidas = batidasByFuncionario.get(func.Id) ?? [];
 
         for (const batida of funcBatidas) {
           const diaSemanaIdx = getDiaSemanaIndex(batida.Data);
@@ -135,11 +142,10 @@ const ReportPage = () => {
           if (!horarioDia || !horarioDia.Entrada1) continue;
 
           const entrada1Real = batida.Entrada1;
-          if (!entrada1Real) continue; // no clock-in
+          if (!entrada1Real) continue;
 
           const esperadoMin = timeToMinutes(horarioDia.Entrada1);
           const realMin = timeToMinutes(entrada1Real);
-
           const atraso = realMin - esperadoMin;
           const atrasado = atraso > 0;
 
@@ -168,7 +174,7 @@ const ReportPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [auth, dataInicio, dataFim, toast]);
+  }, [auth, dataInicio, dataFim, setReportData, toast]);
 
   if (!auth) {
     navigate("/");

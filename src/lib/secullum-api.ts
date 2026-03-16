@@ -6,18 +6,48 @@ import type {
   SecullumHorario,
 } from "@/types/secullum";
 
-async function callProxy(action: string, payload: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke("secullum-proxy", {
-    body: { action, payload },
-  });
+const RETRYABLE_STATUS = [408, 429, 500, 502, 503, 504];
+const horarioRequestCache = new Map<string, Promise<SecullumHorario[]>>();
 
-  if (error) throw new Error(error.message || "Erro na comunicação");
-  if (data?.error) throw new Error(data.error);
-  return data;
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("failed to fetch") ||
+    normalized.includes("network") ||
+    normalized.includes("timeout") ||
+    RETRYABLE_STATUS.some((status) => normalized.includes(`${status}`))
+  );
+}
+
+async function callProxy(action: string, payload: Record<string, unknown>, maxRetries = 3) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    const { data, error } = await supabase.functions.invoke("secullum-proxy", {
+      body: { action, payload },
+    });
+
+    if (!error && !data?.error) {
+      return data;
+    }
+
+    lastError = new Error(error?.message || data?.error || "Erro na comunicação");
+    if (attempt === maxRetries - 1 || !isRetryableError(lastError.message)) {
+      throw lastError;
+    }
+
+    await wait(400 * (attempt + 1));
+  }
+
+  throw lastError ?? new Error("Erro na comunicação");
 }
 
 export async function login(username: string, password: string): Promise<string> {
-  const data = await callProxy("login", { username, password });
+  const data = await callProxy("login", { username, password }, 1);
   return data.access_token;
 }
 
@@ -56,9 +86,16 @@ export async function getHorario(
   bankId: number,
   numero: number
 ): Promise<SecullumHorario[]> {
-  return callProxy("api-request", {
+  const cacheKey = `${bankId}:${numero}`;
+  const cached = horarioRequestCache.get(cacheKey);
+  if (cached) return cached;
+
+  const request = callProxy("api-request", {
     token,
     bankId,
     endpoint: `Horarios?numero=${numero}`,
-  });
+  }).then((result) => result as SecullumHorario[]);
+
+  horarioRequestCache.set(cacheKey, request);
+  return request;
 }
