@@ -3,6 +3,7 @@ import { Clock, LogOut, FileText, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSecullum } from "@/contexts/SecullumContext";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const AppHeader = () => {
   const { auth, logout } = useSecullum();
@@ -53,10 +54,13 @@ const AppHeader = () => {
           </nav>
         </div>
 
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Sair</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeSwitcher />
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Sair</span>
+          </Button>
+        </div>
       </div>
     </header>
   );
