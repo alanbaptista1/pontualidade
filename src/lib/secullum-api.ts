@@ -31,13 +31,19 @@ async function callProxy(action: string, payload: Record<string, unknown>, maxRe
       body: { action, payload },
     });
 
-    if (!error && !data?.error) {
+    // When edge function returns non-2xx, SDK puts error but data still has the real message
+    if (data?.error) {
+      lastError = new Error(data.error);
+      if (attempt === maxRetries - 1 || !isRetryableError(lastError.message)) {
+        throw lastError;
+      }
+    } else if (error && !data) {
+      lastError = new Error(error.message || "Erro na comunicação");
+      if (attempt === maxRetries - 1 || !isRetryableError(lastError.message)) {
+        throw lastError;
+      }
+    } else {
       return data;
-    }
-
-    lastError = new Error(error?.message || data?.error || "Erro na comunicação");
-    if (attempt === maxRetries - 1 || !isRetryableError(lastError.message)) {
-      throw lastError;
     }
 
     await wait(400 * (attempt + 1));
