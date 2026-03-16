@@ -52,7 +52,7 @@ const LoginPage = () => {
       toast({ title: "Autenticado com sucesso!", description: "Selecione um banco para continuar." });
     } catch (err: any) {
       const msg = err.message?.toLowerCase() || "";
-      const isUnauthorized = msg.includes("401") || msg.includes("unauthorized") || msg.includes("não autorizado") || msg.includes("invalid");
+      const isUnauthorized = msg.includes("401") || msg.includes("unauthorized") || msg.includes("não autorizado") || msg.includes("invalid") || msg.includes("incorreto") || msg.includes("senha") || msg.includes("email");
       const userMessage = isUnauthorized
         ? "Login ou senha inválidos. Verifique suas credenciais e tente novamente."
         : err.message || "Erro ao conectar com o servidor. Tente novamente.";
