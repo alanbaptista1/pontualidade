@@ -1,14 +1,58 @@
+﻿import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Clock, LogOut, FileText, BarChart3 } from "lucide-react";
+import { BarChart3, Clock, FileText, LifeBuoy, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useSecullum } from "@/contexts/SecullumContext";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+
+const CHAMADO_ENDPOINT = "https://n8n.dubrasilnexa.com.br/webhook/e125c92f-35f5-4d39-967f-ed66eac28b8c";
+const COD_CLIENTE_FIXO = "21094";
+
+const normalizePhoneDigits = (value: string) => value.replace(/\D/g, "");
+
+const formatPhoneDisplay = (digits: string) => {
+  if (!digits.startsWith("55")) {
+    digits = `55${digits}`;
+  }
+
+  const limited = digits.slice(0, 13);
+  const country = limited.slice(0, 2);
+  const area = limited.slice(2, 4);
+  const first = limited.slice(4, 9);
+  const last = limited.slice(9, 13);
+
+  if (!area) return `${country} `;
+
+  let formatted = `${country} ${area}`;
+  if (first) {
+    formatted += ` ${first}`;
+  }
+  if (last) {
+    formatted += `-${last}`;
+  }
+  return formatted;
+};
 
 const AppHeader = () => {
   const { auth, logout } = useSecullum();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState({
+    title: "",
+    message: "",
+    contactName: "",
+    phone: "55 ",
+  });
 
   const handleLogout = () => {
     logout();
@@ -19,6 +63,63 @@ const AppHeader = () => {
     { label: "Relatório", path: "/relatorio", icon: FileText },
     { label: "Análises", path: "/analises", icon: BarChart3 },
   ];
+
+  const handlePhoneChange = (value: string) => {
+    const digits = normalizePhoneDigits(value);
+    const formatted = formatPhoneDisplay(digits);
+    setFormValues((prev) => ({ ...prev, phone: formatted }));
+  };
+
+  const handleSubmitChamado = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const payload = {
+      cod_cliente: COD_CLIENTE_FIXO,
+      title: formValues.title.trim(),
+      message: formValues.message.trim(),
+      nome_de_contato: formValues.contactName.trim(),
+      telefone: normalizePhoneDigits(formValues.phone),
+    };
+
+    const telefoneLength = payload.telefone.length;
+    const telefoneValido =
+      payload.telefone.startsWith("55") && (telefoneLength === 12 || telefoneLength === 13);
+
+    if (!payload.title || !payload.message || !payload.nome_de_contato || !telefoneValido) {
+      toast({
+        title: "Preencha todos os campos",
+        description: "Informe o telefone completo com DDD.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch(CHAMADO_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}`);
+      }
+
+      toast({
+        title: "Chamado enviado",
+        description: "Recebemos sua solicitação e vamos retornar em breve.",
+      });
+
+      setFormValues({ title: "", message: "", contactName: "", phone: "55 " });
+      setIsDialogOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro inesperado ao enviar o chamado.";
+      toast({ title: "Falha ao enviar", description: message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-md">
@@ -51,6 +152,76 @@ const AppHeader = () => {
                 <span className="hidden sm:inline">{item.label}</span>
               </Button>
             ))}
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+                  <LifeBuoy className="h-4 w-4" />
+                  <span className="hidden sm:inline">Abrir chamado</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                  <DialogTitle>Abertura de chamado</DialogTitle>
+                  <DialogDescription>Preencha os dados abaixo para registrar sua solicitação.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmitChamado} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chamado-title">Título da solicitação</Label>
+                    <Input
+                      id="chamado-title"
+                      value={formValues.title}
+                      onChange={(event) => setFormValues((prev) => ({ ...prev, title: event.target.value }))}
+                      placeholder="Ex: Falha no equipamento"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="chamado-message">Mensagem de abertura do chamado</Label>
+                    <Textarea
+                      id="chamado-message"
+                      value={formValues.message}
+                      onChange={(event) => setFormValues((prev) => ({ ...prev, message: event.target.value }))}
+                      placeholder="Descreva o problema com detalhes"
+                      className="min-h-[120px]"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="chamado-contact">Nome do contato</Label>
+                      <Input
+                        id="chamado-contact"
+                        value={formValues.contactName}
+                        onChange={(event) => setFormValues((prev) => ({ ...prev, contactName: event.target.value }))}
+                        placeholder="Ex: Alan"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="chamado-phone">Telefone para contato</Label>
+                      <Input
+                        id="chamado-phone"
+                        value={formValues.phone}
+                        onChange={(event) => handlePhoneChange(event.target.value)}
+                        inputMode="tel"
+                        placeholder="55 34 98888-8888"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:justify-end">
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Enviando..." : "Enviar chamado"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </nav>
         </div>
 
@@ -67,3 +238,4 @@ const AppHeader = () => {
 };
 
 export default AppHeader;
+
