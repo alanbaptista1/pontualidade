@@ -44,10 +44,12 @@ export type Database = {
           error_message: string | null
           finished_at: string | null
           id: string
+          next_retry_at: string | null
           pdf_path: string | null
           pdf_size_bytes: number | null
           period_end: string | null
           period_start: string | null
+          retry_count: number
           schedule_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["execution_status"]
@@ -59,10 +61,12 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          next_retry_at?: string | null
           pdf_path?: string | null
           pdf_size_bytes?: number | null
           period_end?: string | null
           period_start?: string | null
+          retry_count?: number
           schedule_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["execution_status"]
@@ -74,10 +78,12 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          next_retry_at?: string | null
           pdf_path?: string | null
           pdf_size_bytes?: number | null
           period_end?: string | null
           period_start?: string | null
+          retry_count?: number
           schedule_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["execution_status"]
