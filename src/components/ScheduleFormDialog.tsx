@@ -39,6 +39,7 @@ export interface ScheduleRecord {
   cron_expression: string;
   is_active: boolean;
   notify_email: boolean;
+  notification_email: string | null;
 }
 
 interface Props {
@@ -67,6 +68,12 @@ const formSchema = z.object({
   cron_expression: z.string().min(1),
   is_active: z.boolean(),
   notify_email: z.boolean(),
+  notification_email: z
+    .string()
+    .trim()
+    .email("E-mail inválido")
+    .or(z.literal(""))
+    .nullable(),
 });
 
 const PERIOD_OPTIONS: SchedulePeriodType[] = [
@@ -102,6 +109,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
     cron_expression: dailyCronAt(8, 0),
     is_active: true,
     notify_email: true,
+    notification_email: "",
   });
 
   // Reset/populate when dialog opens
@@ -119,6 +127,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         cron_expression: schedule.cron_expression,
         is_active: schedule.is_active,
         notify_email: schedule.notify_email,
+        notification_email: schedule.notification_email ?? "",
       });
       const parsed = parseDailyCron(schedule.cron_expression);
       if (parsed) {
@@ -139,6 +148,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         cron_expression: dailyCronAt(8, 0),
         is_active: true,
         notify_email: true,
+        notification_email: "",
       });
       setCronMode("daily");
       setDailyTime("08:00");
@@ -207,6 +217,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
       ...form,
       custom_start_date: form.custom_start_date || null,
       custom_end_date: form.custom_end_date || null,
+      notification_email: form.notification_email.trim() || null,
     });
     if (!parsed.success) {
       toast({
@@ -227,6 +238,11 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
       return;
     }
 
+    const notificationEmail =
+      parsed.data.notification_email && parsed.data.notification_email !== ""
+        ? parsed.data.notification_email
+        : null;
+
     setSaving(true);
     try {
       if (isEditing && schedule) {
@@ -243,6 +259,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
             cron_expression: parsed.data.cron_expression,
             is_active: parsed.data.is_active,
             notify_email: parsed.data.notify_email,
+            notification_email: notificationEmail,
           })
           .eq("id", schedule.id);
         if (error) throw error;
@@ -260,6 +277,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
           cron_expression: parsed.data.cron_expression,
           is_active: parsed.data.is_active,
           notify_email: parsed.data.notify_email,
+          notification_email: notificationEmail,
         });
         if (error) throw error;
         toast({ title: "Agendamento criado" });
@@ -428,6 +446,21 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
                 onCheckedChange={(c) => setForm((p) => ({ ...p, notify_email: c }))}
               />
             </div>
+            {form.notify_email && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <Label htmlFor="sch-notif-email" className="text-sm">E-mail de notificação (opcional)</Label>
+                <Input
+                  id="sch-notif-email"
+                  type="email"
+                  placeholder="Em branco = e-mail da conta"
+                  value={form.notification_email}
+                  onChange={(e) => setForm((p) => ({ ...p, notification_email: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ Sem domínio verificado no Resend, e-mails só chegam no endereço da sua conta. Para enviar para outros e-mails, verifique um domínio em resend.com.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
