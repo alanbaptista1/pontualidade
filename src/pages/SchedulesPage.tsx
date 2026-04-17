@@ -47,7 +47,7 @@ const SchedulesPage = () => {
       setLoading(false);
       return;
     }
-    setSchedules((data ?? []) as ScheduleRecord[]);
+    setSchedules((data ?? []) as unknown as ScheduleRecord[]);
     setLoading(false);
   }, [user, toast]);
 
@@ -203,7 +203,7 @@ const SchedulesPage = () => {
                             <p className="font-medium text-foreground">{s.tolerance_minutes} min</p>
                           </div>
                         </div>
-                        {(s.department_filter || s.only_late) && (
+                        {(s.department_filter || s.only_late || (s.whatsapp_recipients?.length ?? 0) > 0) && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {s.department_filter && (
                               <Badge variant="outline" className="font-normal">
@@ -213,6 +213,12 @@ const SchedulesPage = () => {
                             {s.only_late && (
                               <Badge variant="outline" className="font-normal">
                                 Somente atrasados
+                              </Badge>
+                            )}
+                            {(s.whatsapp_recipients?.length ?? 0) > 0 && (
+                              <Badge variant="outline" className="font-normal">
+                                WhatsApp: {s.whatsapp_recipients!.length}{" "}
+                                {s.whatsapp_recipients!.length === 1 ? "destinatário" : "destinatários"}
                               </Badge>
                             )}
                           </div>

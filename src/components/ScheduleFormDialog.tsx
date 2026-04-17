@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,11 @@ interface BankOption {
   nome: string;
 }
 
+export interface WhatsappRecipient {
+  name: string;
+  phone: string;
+}
+
 export interface ScheduleRecord {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ export interface ScheduleRecord {
   notification_email: string | null;
   department_filter: string | null;
   only_late: boolean;
+  whatsapp_recipients: WhatsappRecipient[] | null;
 }
 
 interface Props {
@@ -121,6 +127,34 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
     only_late: false,
   });
 
+  const [whatsappRecipients, setWhatsappRecipients] = useState<WhatsappRecipient[]>([]);
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientPhone, setNewRecipientPhone] = useState("");
+
+  const addRecipient = () => {
+    const name = newRecipientName.trim();
+    const phone = newRecipientPhone.trim();
+    if (!name || !phone) {
+      toast({ title: "Preencha nome e telefone", variant: "destructive" });
+      return;
+    }
+    if (name.length > 80) {
+      toast({ title: "Nome muito longo (máx. 80)", variant: "destructive" });
+      return;
+    }
+    if (phone.length > 30) {
+      toast({ title: "Telefone muito longo (máx. 30)", variant: "destructive" });
+      return;
+    }
+    setWhatsappRecipients((prev) => [...prev, { name, phone }]);
+    setNewRecipientName("");
+    setNewRecipientPhone("");
+  };
+
+  const removeRecipient = (idx: number) => {
+    setWhatsappRecipients((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // Reset/populate when dialog opens
   useEffect(() => {
     if (!open) return;
@@ -140,6 +174,9 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         department_filter: schedule.department_filter ?? "",
         only_late: schedule.only_late ?? false,
       });
+      setWhatsappRecipients(
+        Array.isArray(schedule.whatsapp_recipients) ? schedule.whatsapp_recipients : [],
+      );
       const parsed = parseDailyCron(schedule.cron_expression);
       if (parsed) {
         setCronMode("daily");
@@ -163,9 +200,12 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         department_filter: "",
         only_late: false,
       });
+      setWhatsappRecipients([]);
       setCronMode("daily");
       setDailyTime("08:00");
     }
+    setNewRecipientName("");
+    setNewRecipientPhone("");
     setDepartments([]);
   }, [open, schedule]);
 
@@ -306,6 +346,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         notification_email: notificationEmail,
         department_filter: parsed.data.department_filter,
         only_late: parsed.data.only_late,
+        whatsapp_recipients: whatsappRecipients as unknown as never,
       };
 
       if (isEditing && schedule) {
@@ -563,7 +604,84 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
               </div>
             )}
           </div>
+
+          {/* Destinatários WhatsApp */}
+          <div className="space-y-3 rounded-lg border border-border p-3">
+            <div>
+              <Label className="text-sm font-medium">Destinatários do WhatsApp</Label>
+              <p className="text-xs text-muted-foreground">
+                Pessoas que receberão o relatório via WhatsApp. Adicione quantas quiser.
+              </p>
+            </div>
+
+            {whatsappRecipients.length > 0 && (
+              <div className="space-y-2">
+                {whatsappRecipients.map((r, idx) => (
+                  <div
+                    key={`${r.phone}-${idx}`}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{r.phone}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRecipient(idx)}
+                      aria-label="Remover destinatário"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="space-y-1">
+                <Label htmlFor="wa-name" className="text-xs">Nome da pessoa</Label>
+                <Input
+                  id="wa-name"
+                  value={newRecipientName}
+                  maxLength={80}
+                  placeholder="Ex: João Silva"
+                  onChange={(e) => setNewRecipientName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRecipient();
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="wa-phone" className="text-xs">WhatsApp</Label>
+                <Input
+                  id="wa-phone"
+                  value={newRecipientPhone}
+                  maxLength={30}
+                  placeholder="Ex: +55 11 99999-9999"
+                  onChange={(e) => setNewRecipientPhone(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRecipient();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" variant="secondary" onClick={addRecipient} className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
