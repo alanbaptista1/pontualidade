@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Download, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
+import { Link2, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
