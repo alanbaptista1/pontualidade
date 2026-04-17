@@ -96,24 +96,22 @@ const ExecutionsHistory = () => {
     };
   }, [load]);
 
-  const handleDownload = async (exec: ReportExecution) => {
+  const handleCopyLink = async (exec: ReportExecution) => {
     if (!exec.pdf_path) return;
     setDownloadingId(exec.id);
     try {
       const { data, error } = await supabase.storage
         .from("reports")
-        .createSignedUrl(exec.pdf_path, 60 * 5);
+        .createSignedUrl(exec.pdf_path, 60 * 60 * 24 * 7);
       if (error || !data) throw error ?? new Error("Falha ao gerar link");
-      // Trigger browser download
-      const a = document.createElement("a");
-      a.href = data.signedUrl;
-      a.download = `relatorio-${exec.period_start}-${exec.period_end}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      await navigator.clipboard.writeText(data.signedUrl);
+      toast({
+        title: "Link copiado",
+        description: "Link de download válido por 7 dias copiado para a área de transferência.",
+      });
     } catch (err: any) {
       toast({
-        title: "Erro ao baixar PDF",
+        title: "Erro ao gerar link",
         description: err.message,
         variant: "destructive",
       });
