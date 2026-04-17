@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { listBanks, login as secullumLogin } from "@/lib/secullum-api";
+import { listBanks, listFuncionarios, login as secullumLogin } from "@/lib/secullum-api";
 import {
   PERIOD_TYPE_LABELS,
   type SchedulePeriodType,
@@ -40,6 +40,8 @@ export interface ScheduleRecord {
   is_active: boolean;
   notify_email: boolean;
   notification_email: string | null;
+  department_filter: string | null;
+  only_late: boolean;
 }
 
 interface Props {
@@ -74,6 +76,8 @@ const formSchema = z.object({
     .email("E-mail inválido")
     .or(z.literal(""))
     .nullable(),
+  department_filter: z.string().nullable(),
+  only_late: z.boolean(),
 });
 
 const PERIOD_OPTIONS: SchedulePeriodType[] = [
@@ -97,6 +101,9 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
   const [saving, setSaving] = useState(false);
   const [cronMode, setCronMode] = useState<"daily" | "advanced">("daily");
   const [dailyTime, setDailyTime] = useState("08:00");
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
+  const [secullumToken, setSecullumToken] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -110,6 +117,8 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
     is_active: true,
     notify_email: true,
     notification_email: "",
+    department_filter: "",
+    only_late: false,
   });
 
   // Reset/populate when dialog opens
@@ -128,6 +137,8 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         is_active: schedule.is_active,
         notify_email: schedule.notify_email,
         notification_email: schedule.notification_email ?? "",
+        department_filter: schedule.department_filter ?? "",
+        only_late: schedule.only_late ?? false,
       });
       const parsed = parseDailyCron(schedule.cron_expression);
       if (parsed) {
@@ -149,10 +160,13 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         is_active: true,
         notify_email: true,
         notification_email: "",
+        department_filter: "",
+        only_late: false,
       });
       setCronMode("daily");
       setDailyTime("08:00");
     }
+    setDepartments([]);
   }, [open, schedule]);
 
   // Sync daily picker -> cron expression
@@ -185,6 +199,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         const token = await secullumLogin(creds.secullum_username, creds.secullum_password);
         const list = await listBanks(token);
         if (cancelled) return;
+        setSecullumToken(token);
         setBanks(list.map((b) => ({ id: String(b.id), nome: b.nome })));
       } catch (err) {
         if (cancelled) return;
