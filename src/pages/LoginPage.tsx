@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, LogIn, Loader2 } from "lucide-react";
+import { Clock, LogIn, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { login, listBanks } from "@/lib/secullum-api";
 import { useSecullum } from "@/contexts/SecullumContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import type { SecullumBank } from "@/types/secullum";
 import BankSelector from "@/components/BankSelector";
 
@@ -22,17 +24,55 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [banks, setBanks] = useState<SecullumBank[]>([]);
+  const [hasSavedCreds, setHasSavedCreds] = useState(false);
   const { setAuth } = useSecullum();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const saved = localStorage.getItem(SAVED_EMAIL_KEY);
-    if (saved) {
-      setEmail(saved);
-      setRememberEmail(true);
+    const init = async () => {
+      const saved = localStorage.getItem(SAVED_EMAIL_KEY);
+      if (saved) {
+        setEmail(saved);
+        setRememberEmail(true);
+      }
+      if (user) {
+        const { data } = await supabase
+          .from("secullum_credentials")
+          .select("secullum_username")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data) {
+          setEmail(data.secullum_username);
+          setHasSavedCreds(true);
+        }
+      }
+    };
+    init();
+  }, [user]);
+
+  const handleQuickLogin = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("secullum_credentials")
+        .select("secullum_username, secullum_password")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error || !data) throw new Error("Credenciais não encontradas. Cadastre em Conta.");
+      const accessToken = await login(data.secullum_username, data.secullum_password);
+      setToken(accessToken);
+      const bankList = await listBanks(accessToken);
+      setBanks(bankList);
+      toast({ title: "Autenticado!", description: "Selecione um banco." });
+    } catch (err: any) {
+      toast({ title: "Falha no login rápido", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
