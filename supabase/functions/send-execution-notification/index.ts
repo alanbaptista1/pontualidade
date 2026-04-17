@@ -56,9 +56,8 @@ function buildSuccessHtml(opts: {
 <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">Registros</td><td style="font-size:13px;color:#1f2937;text-align:right;font-weight:500;">${opts.totalRecords ?? 0}</td></tr>
 <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">Gerado em</td><td style="font-size:13px;color:#1f2937;text-align:right;font-weight:500;">${fmtDateTime(opts.finishedAt)}</td></tr>
 </table>
-<table cellspacing="0" cellpadding="0" align="center"><tr><td style="background:#2962cb;border-radius:8px;">
-<a href="${opts.downloadUrl}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;">📥 Baixar PDF</a>
-</td></tr></table>
+<p style="margin:0 0 8px;font-size:14px;color:#1f2937;">Link de download:</p>
+<p style="margin:0 0 24px;font-size:13px;line-height:1.5;word-break:break-all;"><a href="${opts.downloadUrl}" style="color:#2962cb;text-decoration:underline;">${opts.downloadUrl}</a></p>
 <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;text-align:center;">O link de download é válido por 7 dias.</p>
 </td></tr>
 <tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Pontualidade · Notificação automática</td></tr>
