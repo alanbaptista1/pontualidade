@@ -197,15 +197,15 @@ const ExecutionsHistory = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDownload(e)}
+                        onClick={() => handleCopyLink(e)}
                         disabled={downloadingId === e.id}
                       >
                         {downloadingId === e.id ? (
                           <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <Download className="mr-2 h-3.5 w-3.5" />
+                          <Link2 className="mr-2 h-3.5 w-3.5" />
                         )}
-                        Baixar
+                        Copiar link
                       </Button>
                     ) : null}
                   </TableCell>
