@@ -122,6 +122,7 @@ export type Database = {
           tolerance_minutes: number
           updated_at: string
           user_id: string
+          whatsapp_recipients: Json
         }
         Insert: {
           bank_id: string
@@ -144,6 +145,7 @@ export type Database = {
           tolerance_minutes?: number
           updated_at?: string
           user_id: string
+          whatsapp_recipients?: Json
         }
         Update: {
           bank_id?: string
@@ -166,6 +168,7 @@ export type Database = {
           tolerance_minutes?: number
           updated_at?: string
           user_id?: string
+          whatsapp_recipients?: Json
         }
         Relationships: []
       }
