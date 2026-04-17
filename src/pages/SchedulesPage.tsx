@@ -47,7 +47,7 @@ const SchedulesPage = () => {
       setLoading(false);
       return;
     }
-    setSchedules((data ?? []) as ScheduleRecord[]);
+    setSchedules((data ?? []) as unknown as ScheduleRecord[]);
     setLoading(false);
   }, [user, toast]);
 
