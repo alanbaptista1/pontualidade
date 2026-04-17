@@ -38,6 +38,122 @@ export type Database = {
         }
         Relationships: []
       }
+      report_executions: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          pdf_path: string | null
+          pdf_size_bytes: number | null
+          period_end: string | null
+          period_start: string | null
+          schedule_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["execution_status"]
+          total_records: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          pdf_path?: string | null
+          pdf_size_bytes?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          schedule_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["execution_status"]
+          total_records?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          pdf_path?: string | null
+          pdf_size_bytes?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          schedule_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["execution_status"]
+          total_records?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_executions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "report_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_schedules: {
+        Row: {
+          bank_id: string
+          bank_name: string
+          created_at: string
+          cron_expression: string
+          custom_end_date: string | null
+          custom_start_date: string | null
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          notify_email: boolean
+          period_type: Database["public"]["Enums"]["schedule_period_type"]
+          timezone: string
+          tolerance_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_id: string
+          bank_name: string
+          created_at?: string
+          cron_expression: string
+          custom_end_date?: string | null
+          custom_start_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          notify_email?: boolean
+          period_type: Database["public"]["Enums"]["schedule_period_type"]
+          timezone?: string
+          tolerance_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_id?: string
+          bank_name?: string
+          created_at?: string
+          cron_expression?: string
+          custom_end_date?: string | null
+          custom_start_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          notify_email?: boolean
+          period_type?: Database["public"]["Enums"]["schedule_period_type"]
+          timezone?: string
+          tolerance_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       secullum_credentials: {
         Row: {
           client_id: string
@@ -76,7 +192,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      execution_status: "pending" | "running" | "success" | "error"
+      schedule_period_type:
+        | "last_7_days"
+        | "last_30_days"
+        | "yesterday"
+        | "current_month_until_yesterday"
+        | "previous_month"
+        | "last_week"
+        | "custom_range"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -203,6 +327,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      execution_status: ["pending", "running", "success", "error"],
+      schedule_period_type: [
+        "last_7_days",
+        "last_30_days",
+        "yesterday",
+        "current_month_until_yesterday",
+        "previous_month",
+        "last_week",
+        "custom_range",
+      ],
+    },
   },
 } as const

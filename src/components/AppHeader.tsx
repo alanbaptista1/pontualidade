@@ -1,6 +1,6 @@
 ﻿import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BarChart3, Clock, FileText, LifeBuoy, LogOut, UserCog } from "lucide-react";
+import { BarChart3, CalendarClock, Clock, FileText, LifeBuoy, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,7 @@ const AppHeader = () => {
   const navItems = [
     { label: "Relatório", path: "/relatorio", icon: FileText },
     { label: "Análises", path: "/analises", icon: BarChart3 },
+    { label: "Agendamentos", path: "/agendamentos", icon: CalendarClock },
     { label: "Conta", path: "/conta", icon: UserCog },
   ];
 
