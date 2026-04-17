@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { listBancos, login as secullumLogin } from "@/lib/secullum-api";
+import { listBanks, login as secullumLogin } from "@/lib/secullum-api";
 import {
   PERIOD_TYPE_LABELS,
   type SchedulePeriodType,
@@ -172,12 +172,8 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
           setBanksError("Cadastre suas credenciais Secullum em 'Conta' antes de criar agendamentos.");
           return;
         }
-        const auth = await secullumLogin({
-          username: creds.secullum_username,
-          password: creds.secullum_password,
-          clientId: creds.client_id,
-        });
-        const list = await listBancos(auth.accessToken);
+        const token = await secullumLogin(creds.secullum_username, creds.secullum_password);
+        const list = await listBanks(token);
         if (cancelled) return;
         setBanks(list.map((b) => ({ id: String(b.id), nome: b.nome })));
       } catch (err) {
