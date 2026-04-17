@@ -172,6 +172,8 @@ function buildPDF(
     dataFim: string;
     bankName: string;
     tolerance: number;
+    departmentFilter: string | null;
+    onlyLate: boolean;
   }
 ): Uint8Array {
   const doc = new jsPDF({ orientation: "landscape" });
@@ -190,18 +192,23 @@ function buildPDF(
   );
   doc.text(`Tolerância aplicada: ${options.tolerance} min`, 14, 40);
 
+  const filtersLine: string[] = [];
+  filtersLine.push(`Departamento: ${options.departmentFilter || "Todos"}`);
+  filtersLine.push(`Somente atrasados: ${options.onlyLate ? "Sim" : "Não"}`);
+  doc.text(filtersLine.join("  ·  "), 14, 46);
+
   const atrasados = records.filter((r) => r.atrasado).length;
   const pontuais = records.length - atrasados;
   doc.setFontSize(9);
   doc.text(
     `Total: ${records.length} | Atrasados: ${atrasados} | Pontuais: ${pontuais}`,
     14,
-    46
+    52
   );
 
   // @ts-ignore - autoTable typings differ in deno
   autoTable(doc, {
-    startY: 52,
+    startY: 58,
     head: [
       [
         "Funcionário",
@@ -385,8 +392,8 @@ Deno.serve(async (req) => {
       batidasByFuncionario.set(b.FuncionarioId, arr);
     }
 
-    // 6. Compute lateness
-    const records: LatenessRecord[] = [];
+    // 6. Compute lateness (mirrors src/pages/ReportPage.tsx logic)
+    const allRecords: LatenessRecord[] = [];
     for (const func of activeFuncs) {
       const horario = horarioMap.get(func.Horario?.Numero);
       if (!horario?.Dias) continue;
@@ -401,9 +408,11 @@ Deno.serve(async (req) => {
         const esperadoMin = timeToMinutes(horarioDia.Entrada1);
         const realMin = timeToMinutes(realTime);
         const atraso = realMin - esperadoMin;
-        const atrasado = atraso > schedule.tolerance_minutes;
+        // Mesma definição do front: atrasado = qualquer atraso > 0.
+        // A tolerância é aplicada como filtro abaixo (junto com only_late).
+        const atrasado = atraso > 0;
 
-        records.push({
+        allRecords.push({
           nome: func.Nome,
           departamento: func.Departamento?.Descricao || "N/A",
           data: batida.Data.slice(0, 10),
@@ -417,12 +426,28 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 6b. Apply schedule filters (department + only_late + tolerance)
+    const departmentFilter = (schedule.department_filter ?? "").trim() || null;
+    const onlyLate = !!schedule.only_late;
+    const tolerance = schedule.tolerance_minutes ?? 0;
+
+    const records = allRecords.filter((r) => {
+      if (departmentFilter && r.departamento !== departmentFilter) return false;
+      if (onlyLate) {
+        if (!r.atrasado) return false;
+        if (r.minutosAtraso <= tolerance) return false;
+      }
+      return true;
+    });
+
     // 7. Build PDF
     const pdfBytes = buildPDF(records, {
       dataInicio,
       dataFim,
       bankName: schedule.bank_name,
       tolerance: schedule.tolerance_minutes,
+      departmentFilter,
+      onlyLate,
     });
 
     // 8. Upload to storage at <user_id>/<execution_id>.pdf
