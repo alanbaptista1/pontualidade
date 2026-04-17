@@ -346,6 +346,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         notification_email: notificationEmail,
         department_filter: parsed.data.department_filter,
         only_late: parsed.data.only_late,
+        whatsapp_recipients: whatsappRecipients as unknown as never,
       };
 
       if (isEditing && schedule) {
