@@ -1,12 +1,13 @@
 ﻿import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BarChart3, Clock, FileText, LifeBuoy, LogOut } from "lucide-react";
+import { BarChart3, Clock, FileText, LifeBuoy, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSecullum } from "@/contexts/SecullumContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -41,6 +42,7 @@ const formatPhoneDisplay = (digits: string) => {
 
 const AppHeader = () => {
   const { auth, logout } = useSecullum();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -54,14 +56,16 @@ const AppHeader = () => {
     phone: "55 ",
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logout();
-    navigate("/");
+    await signOut();
+    navigate("/auth");
   };
 
   const navItems = [
     { label: "Relatório", path: "/relatorio", icon: FileText },
     { label: "Análises", path: "/analises", icon: BarChart3 },
+    { label: "Conta", path: "/conta", icon: UserCog },
   ];
 
   const handlePhoneChange = (value: string) => {
