@@ -135,7 +135,28 @@ const LoginPage = () => {
                 Entre com suas credenciais do Secullum
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {hasSavedCreds && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  <Button
+                    type="button"
+                    onClick={handleQuickLogin}
+                    className="w-full"
+                    disabled={loading}
+                    variant="default"
+                  >
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Entrar com credencial salva
+                  </Button>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    ou entre manualmente abaixo
+                  </p>
+                </div>
+              )}
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">E-mail</Label>
@@ -169,7 +190,7 @@ const LoginPage = () => {
                     Lembrar meu e-mail
                   </Label>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" variant={hasSavedCreds ? "outline" : "default"} disabled={loading}>
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
