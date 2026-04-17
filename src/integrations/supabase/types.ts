@@ -108,6 +108,7 @@ export type Database = {
           cron_expression: string
           custom_end_date: string | null
           custom_start_date: string | null
+          department_filter: string | null
           id: string
           is_active: boolean
           last_run_at: string | null
@@ -115,6 +116,7 @@ export type Database = {
           next_run_at: string | null
           notification_email: string | null
           notify_email: boolean
+          only_late: boolean
           period_type: Database["public"]["Enums"]["schedule_period_type"]
           timezone: string
           tolerance_minutes: number
@@ -128,6 +130,7 @@ export type Database = {
           cron_expression: string
           custom_end_date?: string | null
           custom_start_date?: string | null
+          department_filter?: string | null
           id?: string
           is_active?: boolean
           last_run_at?: string | null
@@ -135,6 +138,7 @@ export type Database = {
           next_run_at?: string | null
           notification_email?: string | null
           notify_email?: boolean
+          only_late?: boolean
           period_type: Database["public"]["Enums"]["schedule_period_type"]
           timezone?: string
           tolerance_minutes?: number
@@ -148,6 +152,7 @@ export type Database = {
           cron_expression?: string
           custom_end_date?: string | null
           custom_start_date?: string | null
+          department_filter?: string | null
           id?: string
           is_active?: boolean
           last_run_at?: string | null
@@ -155,6 +160,7 @@ export type Database = {
           next_run_at?: string | null
           notification_email?: string | null
           notify_email?: boolean
+          only_late?: boolean
           period_type?: Database["public"]["Enums"]["schedule_period_type"]
           timezone?: string
           tolerance_minutes?: number
