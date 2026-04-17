@@ -215,6 +215,37 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
     };
   }, [open, user]);
 
+  // Load departments for the selected bank (used by department filter)
+  useEffect(() => {
+    if (!open || !secullumToken || !form.bank_id) {
+      setDepartments([]);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      setLoadingDepts(true);
+      try {
+        const funcs = await listFuncionarios(secullumToken, Number(form.bank_id));
+        if (cancelled) return;
+        const set = new Set<string>();
+        for (const f of funcs) {
+          if (!f.Demissao && !f.Invisivel && f.Departamento?.Descricao) {
+            set.add(f.Departamento.Descricao);
+          }
+        }
+        setDepartments(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      } catch {
+        if (!cancelled) setDepartments([]);
+      } finally {
+        if (!cancelled) setLoadingDepts(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, secullumToken, form.bank_id]);
+
   const cronDescription = useMemo(() => {
     if (!isValidCronExpression(form.cron_expression)) return "Expressão cron inválida";
     return describeCron(form.cron_expression);
@@ -222,7 +253,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
 
   const handleBankChange = (id: string) => {
     const bank = banks.find((b) => b.id === id);
-    setForm((prev) => ({ ...prev, bank_id: id, bank_name: bank?.nome ?? "" }));
+    setForm((prev) => ({ ...prev, bank_id: id, bank_name: bank?.nome ?? "", department_filter: "" }));
   };
 
   const handleSubmit = async () => {
@@ -233,6 +264,7 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
       custom_start_date: form.custom_start_date || null,
       custom_end_date: form.custom_end_date || null,
       notification_email: form.notification_email.trim() || null,
+      department_filter: form.department_filter || null,
     });
     if (!parsed.success) {
       toast({
@@ -260,39 +292,33 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
 
     setSaving(true);
     try {
+      const commonFields = {
+        name: parsed.data.name,
+        bank_id: parsed.data.bank_id,
+        bank_name: parsed.data.bank_name,
+        period_type: parsed.data.period_type,
+        custom_start_date: parsed.data.custom_start_date,
+        custom_end_date: parsed.data.custom_end_date,
+        tolerance_minutes: parsed.data.tolerance_minutes,
+        cron_expression: parsed.data.cron_expression,
+        is_active: parsed.data.is_active,
+        notify_email: parsed.data.notify_email,
+        notification_email: notificationEmail,
+        department_filter: parsed.data.department_filter,
+        only_late: parsed.data.only_late,
+      };
+
       if (isEditing && schedule) {
         const { error } = await supabase
           .from("report_schedules")
-          .update({
-            name: parsed.data.name,
-            bank_id: parsed.data.bank_id,
-            bank_name: parsed.data.bank_name,
-            period_type: parsed.data.period_type,
-            custom_start_date: parsed.data.custom_start_date,
-            custom_end_date: parsed.data.custom_end_date,
-            tolerance_minutes: parsed.data.tolerance_minutes,
-            cron_expression: parsed.data.cron_expression,
-            is_active: parsed.data.is_active,
-            notify_email: parsed.data.notify_email,
-            notification_email: notificationEmail,
-          })
+          .update(commonFields)
           .eq("id", schedule.id);
         if (error) throw error;
         toast({ title: "Agendamento atualizado" });
       } else {
         const { error } = await supabase.from("report_schedules").insert({
           user_id: user.id,
-          name: parsed.data.name,
-          bank_id: parsed.data.bank_id,
-          bank_name: parsed.data.bank_name,
-          period_type: parsed.data.period_type,
-          custom_start_date: parsed.data.custom_start_date,
-          custom_end_date: parsed.data.custom_end_date,
-          tolerance_minutes: parsed.data.tolerance_minutes,
-          cron_expression: parsed.data.cron_expression,
-          is_active: parsed.data.is_active,
-          notify_email: parsed.data.notify_email,
-          notification_email: notificationEmail,
+          ...commonFields,
         });
         if (error) throw error;
         toast({ title: "Agendamento criado" });
@@ -405,6 +431,66 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
               </div>
             </div>
           )}
+
+          {/* Filtros do relatório */}
+          <div className="space-y-3 rounded-lg border border-border p-3">
+            <div>
+              <Label className="text-sm font-medium">Filtros do relatório</Label>
+              <p className="text-xs text-muted-foreground">
+                Restringe quais registros entram no PDF. Os mesmos filtros disponíveis na tela de Relatório.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sch-dept" className="text-sm">Departamento</Label>
+              <Select
+                value={form.department_filter || "__all__"}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, department_filter: v === "__all__" ? "" : v }))
+                }
+                disabled={!form.bank_id || loadingDepts}
+              >
+                <SelectTrigger id="sch-dept">
+                  <SelectValue
+                    placeholder={
+                      !form.bank_id
+                        ? "Selecione um banco primeiro"
+                        : loadingDepts
+                          ? "Carregando departamentos..."
+                          : "Todos"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos os departamentos</SelectItem>
+                  {/* Mantém o valor atual mesmo se o banco ainda não retornou (ex: edição) */}
+                  {form.department_filter &&
+                    !departments.includes(form.department_filter) && (
+                      <SelectItem value={form.department_filter}>
+                        {form.department_filter}
+                      </SelectItem>
+                    )}
+                  {departments.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="sch-only-late" className="text-sm">Somente atrasados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Inclui apenas quem atrasou acima da tolerância configurada.
+                </p>
+              </div>
+              <Switch
+                id="sch-only-late"
+                checked={form.only_late}
+                onCheckedChange={(c) => setForm((p) => ({ ...p, only_late: c }))}
+              />
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label>Frequência</Label>

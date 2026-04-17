@@ -203,6 +203,20 @@ const SchedulesPage = () => {
                             <p className="font-medium text-foreground">{s.tolerance_minutes} min</p>
                           </div>
                         </div>
+                        {(s.department_filter || s.only_late) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {s.department_filter && (
+                              <Badge variant="outline" className="font-normal">
+                                Depto: {s.department_filter}
+                              </Badge>
+                            )}
+                            {s.only_late && (
+                              <Badge variant="outline" className="font-normal">
+                                Somente atrasados
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                           <Button
                             variant="default"
