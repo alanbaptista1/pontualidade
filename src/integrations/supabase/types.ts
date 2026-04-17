@@ -113,6 +113,7 @@ export type Database = {
           last_run_at: string | null
           name: string
           next_run_at: string | null
+          notification_email: string | null
           notify_email: boolean
           period_type: Database["public"]["Enums"]["schedule_period_type"]
           timezone: string
@@ -132,6 +133,7 @@ export type Database = {
           last_run_at?: string | null
           name: string
           next_run_at?: string | null
+          notification_email?: string | null
           notify_email?: boolean
           period_type: Database["public"]["Enums"]["schedule_period_type"]
           timezone?: string
@@ -151,6 +153,7 @@ export type Database = {
           last_run_at?: string | null
           name?: string
           next_run_at?: string | null
+          notification_email?: string | null
           notify_email?: boolean
           period_type?: Database["public"]["Enums"]["schedule_period_type"]
           timezone?: string
