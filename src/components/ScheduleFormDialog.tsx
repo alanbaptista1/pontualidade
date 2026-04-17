@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,11 @@ interface BankOption {
   nome: string;
 }
 
+export interface WhatsappRecipient {
+  name: string;
+  phone: string;
+}
+
 export interface ScheduleRecord {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ export interface ScheduleRecord {
   notification_email: string | null;
   department_filter: string | null;
   only_late: boolean;
+  whatsapp_recipients: WhatsappRecipient[] | null;
 }
 
 interface Props {
@@ -121,6 +127,34 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
     only_late: false,
   });
 
+  const [whatsappRecipients, setWhatsappRecipients] = useState<WhatsappRecipient[]>([]);
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientPhone, setNewRecipientPhone] = useState("");
+
+  const addRecipient = () => {
+    const name = newRecipientName.trim();
+    const phone = newRecipientPhone.trim();
+    if (!name || !phone) {
+      toast({ title: "Preencha nome e telefone", variant: "destructive" });
+      return;
+    }
+    if (name.length > 80) {
+      toast({ title: "Nome muito longo (máx. 80)", variant: "destructive" });
+      return;
+    }
+    if (phone.length > 30) {
+      toast({ title: "Telefone muito longo (máx. 30)", variant: "destructive" });
+      return;
+    }
+    setWhatsappRecipients((prev) => [...prev, { name, phone }]);
+    setNewRecipientName("");
+    setNewRecipientPhone("");
+  };
+
+  const removeRecipient = (idx: number) => {
+    setWhatsappRecipients((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // Reset/populate when dialog opens
   useEffect(() => {
     if (!open) return;
@@ -140,6 +174,9 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         department_filter: schedule.department_filter ?? "",
         only_late: schedule.only_late ?? false,
       });
+      setWhatsappRecipients(
+        Array.isArray(schedule.whatsapp_recipients) ? schedule.whatsapp_recipients : [],
+      );
       const parsed = parseDailyCron(schedule.cron_expression);
       if (parsed) {
         setCronMode("daily");
@@ -163,9 +200,12 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
         department_filter: "",
         only_late: false,
       });
+      setWhatsappRecipients([]);
       setCronMode("daily");
       setDailyTime("08:00");
     }
+    setNewRecipientName("");
+    setNewRecipientPhone("");
     setDepartments([]);
   }, [open, schedule]);
 
