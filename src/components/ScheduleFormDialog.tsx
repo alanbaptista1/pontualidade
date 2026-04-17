@@ -604,7 +604,84 @@ export function ScheduleFormDialog({ open, onOpenChange, schedule, onSaved }: Pr
               </div>
             )}
           </div>
+
+          {/* Destinatários WhatsApp */}
+          <div className="space-y-3 rounded-lg border border-border p-3">
+            <div>
+              <Label className="text-sm font-medium">Destinatários do WhatsApp</Label>
+              <p className="text-xs text-muted-foreground">
+                Pessoas que receberão o relatório via WhatsApp. Adicione quantas quiser.
+              </p>
+            </div>
+
+            {whatsappRecipients.length > 0 && (
+              <div className="space-y-2">
+                {whatsappRecipients.map((r, idx) => (
+                  <div
+                    key={`${r.phone}-${idx}`}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{r.phone}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRecipient(idx)}
+                      aria-label="Remover destinatário"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="space-y-1">
+                <Label htmlFor="wa-name" className="text-xs">Nome da pessoa</Label>
+                <Input
+                  id="wa-name"
+                  value={newRecipientName}
+                  maxLength={80}
+                  placeholder="Ex: João Silva"
+                  onChange={(e) => setNewRecipientName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRecipient();
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="wa-phone" className="text-xs">WhatsApp</Label>
+                <Input
+                  id="wa-phone"
+                  value={newRecipientPhone}
+                  maxLength={30}
+                  placeholder="Ex: +55 11 99999-9999"
+                  onChange={(e) => setNewRecipientPhone(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRecipient();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" variant="secondary" onClick={addRecipient} className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
