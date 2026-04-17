@@ -11,6 +11,7 @@ import AccountPage from "./pages/AccountPage";
 import LoginPage from "./pages/LoginPage";
 import ReportPage from "./pages/ReportPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import SchedulesPage from "./pages/SchedulesPage";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/conta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
                 <Route path="/relatorio" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
                 <Route path="/analises" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+                <Route path="/agendamentos" element={<ProtectedRoute><SchedulesPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SecullumProvider>
