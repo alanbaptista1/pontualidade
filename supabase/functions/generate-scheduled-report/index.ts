@@ -453,6 +453,15 @@ Deno.serve(async (req) => {
       .update({ last_run_at: new Date().toISOString() })
       .eq("id", schedule.id);
 
+    // 11. Send success notification (best-effort, never blocks the response)
+    try {
+      await adminClient.functions.invoke("send-execution-notification", {
+        body: { execution_id: executionId },
+      });
+    } catch (notifyErr) {
+      console.error("[generate-scheduled-report] notification failed:", notifyErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -479,6 +488,23 @@ Deno.serve(async (req) => {
           finished_at: new Date().toISOString(),
         })
         .eq("id", executionId);
+
+      // Send failure notification only when we've exhausted retries (retry_count >= 1).
+      // For the first failure, scheduler-tick will retry once before notifying.
+      try {
+        const { data: execAfter } = await adminClient
+          .from("report_executions")
+          .select("retry_count")
+          .eq("id", executionId)
+          .maybeSingle();
+        if ((execAfter?.retry_count ?? 0) >= 1) {
+          await adminClient.functions.invoke("send-execution-notification", {
+            body: { execution_id: executionId },
+          });
+        }
+      } catch (notifyErr) {
+        console.error("[generate-scheduled-report] failure notification error:", notifyErr);
+      }
     }
 
     return new Response(
