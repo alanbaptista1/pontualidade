@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Download, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
+import { Link2, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -96,24 +96,22 @@ const ExecutionsHistory = () => {
     };
   }, [load]);
 
-  const handleDownload = async (exec: ReportExecution) => {
+  const handleCopyLink = async (exec: ReportExecution) => {
     if (!exec.pdf_path) return;
     setDownloadingId(exec.id);
     try {
       const { data, error } = await supabase.storage
         .from("reports")
-        .createSignedUrl(exec.pdf_path, 60 * 5);
+        .createSignedUrl(exec.pdf_path, 60 * 60 * 24 * 7);
       if (error || !data) throw error ?? new Error("Falha ao gerar link");
-      // Trigger browser download
-      const a = document.createElement("a");
-      a.href = data.signedUrl;
-      a.download = `relatorio-${exec.period_start}-${exec.period_end}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      await navigator.clipboard.writeText(data.signedUrl);
+      toast({
+        title: "Link copiado",
+        description: "Link de download válido por 7 dias copiado para a área de transferência.",
+      });
     } catch (err: any) {
       toast({
-        title: "Erro ao baixar PDF",
+        title: "Erro ao gerar link",
         description: err.message,
         variant: "destructive",
       });
@@ -199,15 +197,15 @@ const ExecutionsHistory = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDownload(e)}
+                        onClick={() => handleCopyLink(e)}
                         disabled={downloadingId === e.id}
                       >
                         {downloadingId === e.id ? (
                           <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <Download className="mr-2 h-3.5 w-3.5" />
+                          <Link2 className="mr-2 h-3.5 w-3.5" />
                         )}
-                        Baixar
+                        Copiar link
                       </Button>
                     ) : null}
                   </TableCell>
