@@ -24,4 +24,5 @@
 - [Error Messaging](mem://ui/error-messaging) — Friendly error parsing and keyword detection
 - [Monetization](mem://features/monetization) — Planned payment provider (Paddle)
 - [Scheduled Reports](mem://features/scheduled-reports) — Phase 2 schedule CRUD: tables, dialog, helpers
+- [Employees Tracking](mem://features/employees-tracking) — Sync employees per bank and track email update status
 - [Email Notifications](mem://features/email-notifications) — Resend connector, success/failure templates, per-schedule recipient
