@@ -17,11 +17,22 @@ async function getSecullumToken(username: string, password: string, clientId: st
   const body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${clientId}`;
   const res = await fetch(`${AUTH_BASE}/Token`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || "Falha de autenticação Secullum");
+  const text = await res.text();
+  if (!res.ok) {
+    console.error("Secullum Token error:", res.status, text.slice(0, 300));
+    throw new Error(`Falha de autenticação Secullum (HTTP ${res.status})`);
+  }
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error("Secullum Token returned non-JSON:", text.slice(0, 300));
+    throw new Error("Resposta inválida do autenticador Secullum");
+  }
+  if (!data?.access_token) throw new Error("Token Secullum ausente na resposta");
   return data.access_token as string;
 }
 
@@ -65,17 +76,32 @@ serve(async (req) => {
       });
     }
 
-    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, creds.client_id);
+    // Always client_id=3, matching secullum-proxy login flow
+    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, "3");
 
     // Busca lista de funcionários
     const empRes = await fetch(`${API_BASE}/Funcionarios`, {
       headers: {
         Authorization: `Bearer ${token}`,
         secullumidbancoselecionado: String(settings.bank_id),
+        Accept: "application/json",
       },
     });
-    const allEmployees = await empRes.json();
-    if (!empRes.ok) throw new Error(typeof allEmployees === "string" ? allEmployees : "Falha ao buscar funcionários");
+    const empText = await empRes.text();
+    if (!empRes.ok) {
+      console.error("Secullum Funcionarios error:", empRes.status, empText.slice(0, 500));
+      throw new Error(`Falha ao buscar funcionários (HTTP ${empRes.status})`);
+    }
+    let allEmployees: any[];
+    try {
+      allEmployees = JSON.parse(empText);
+    } catch (e) {
+      console.error("Failed to parse Funcionarios JSON. First 500 chars:", empText.slice(0, 500));
+      throw new Error("Resposta inválida da Secullum ao listar funcionários");
+    }
+    if (!Array.isArray(allEmployees)) {
+      throw new Error("Resposta inesperada da Secullum (não é lista)");
+    }
 
     const folhaSearch = String(numeroFolha ?? "").trim();
     if (!folhaSearch) throw new Error("Informe o código (Número da Folha)");
