@@ -76,7 +76,8 @@ serve(async (req) => {
       });
     }
 
-    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, creds.client_id || "7");
+    // Always client_id=3, matching secullum-proxy login flow
+    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, "3");
 
     // Busca lista de funcionários
     const empRes = await fetch(`${API_BASE}/Funcionarios`, {
