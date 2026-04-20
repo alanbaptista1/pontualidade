@@ -89,7 +89,30 @@ const LoginPage = () => {
       setToken(accessToken);
       const bankList = await listBanks(accessToken);
       setBanks(bankList);
-      toast({ title: "Autenticado com sucesso!", description: "Selecione um banco para continuar." });
+
+      // Auto-save credentials on first successful login
+      if (user && !hasSavedCreds) {
+        const { error: saveError } = await supabase
+          .from("secullum_credentials")
+          .upsert(
+            {
+              user_id: user.id,
+              secullum_username: email,
+              secullum_password: password,
+              client_id: "7",
+            },
+            { onConflict: "user_id" },
+          );
+        if (!saveError) {
+          setHasSavedCreds(true);
+          toast({
+            title: "Credenciais salvas",
+            description: "Suas credenciais Secullum ficam disponíveis em Conta para próximos acessos.",
+          });
+        }
+      } else {
+        toast({ title: "Autenticado com sucesso!", description: "Selecione um banco para continuar." });
+      }
     } catch (err: any) {
       const msg = err.message?.toLowerCase() || "";
       const isUnauthorized = msg.includes("401") || msg.includes("unauthorized") || msg.includes("não autorizado") || msg.includes("invalid") || msg.includes("incorreto") || msg.includes("senha") || msg.includes("email");
