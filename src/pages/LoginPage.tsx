@@ -26,9 +26,14 @@ const LoginPage = () => {
   const [banks, setBanks] = useState<SecullumBank[]>([]);
   const [hasSavedCreds, setHasSavedCreds] = useState(false);
   const { setAuth } = useSecullum();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   useEffect(() => {
     const init = async () => {
