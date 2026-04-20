@@ -1,1 +1,4 @@
 project_id = "gpswszkzbxljtsylostj"
+
+[functions.public-employee-lookup]
+verify_jwt = false
