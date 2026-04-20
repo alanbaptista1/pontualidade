@@ -177,15 +177,29 @@ serve(async (req) => {
       },
     });
 
+    const nowIso = new Date().toISOString();
+
     await admin
       .from("email_update_requests")
       .update({
         status: "approved",
         secullum_response: secullumResponse,
-        processed_at: new Date().toISOString(),
+        processed_at: nowIso,
         processed_by: userId,
       })
       .eq("id", requestId);
+
+    // Marca o funcionário como atualizado via link na tabela de rastreamento
+    await admin
+      .from("public_link_employees")
+      .update({
+        current_email: request.requested_email,
+        status: "updated_via_link",
+        email_updated_at: nowIso,
+      })
+      .eq("owner_user_id", userId)
+      .eq("bank_id", String(request.bank_id))
+      .eq("numero_folha", String(request.numero_folha));
 
     return new Response(JSON.stringify({ success: true, secullum: secullumResponse, sentPayload: payload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

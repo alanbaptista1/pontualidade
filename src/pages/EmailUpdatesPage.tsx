@@ -121,12 +121,29 @@ const EmailUpdatesPage = () => {
         },
         { onConflict: "user_id" }
       );
-    setSavingSettings(false);
     if (error) {
+      setSavingSettings(false);
       toast({ title: "Falha ao salvar", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Configuração salva" });
+
+    toast({ title: "Configuração salva", description: "Sincronizando lista de funcionários..." });
+    const { data: syncData, error: syncErr } = await supabase.functions.invoke("sync-bank-employees", {
+      body: { bankId: draftBankId, bankName: bank.nome },
+    });
+    setSavingSettings(false);
+    if (syncErr || (syncData as { error?: string })?.error) {
+      toast({
+        title: "Falha ao sincronizar funcionários",
+        description: (syncData as { error?: string })?.error ?? syncErr?.message ?? "Erro",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Funcionários sincronizados",
+        description: `${(syncData as { total?: number })?.total ?? 0} registros salvos`,
+      });
+    }
     await load();
   };
 

@@ -98,6 +98,60 @@ export type Database = {
         }
         Relationships: []
       }
+      public_link_employees: {
+        Row: {
+          bank_id: string
+          bank_name: string
+          created_at: string
+          current_email: string | null
+          email_updated_at: string | null
+          employee_name: string
+          employee_payload: Json | null
+          employee_secullum_id: number | null
+          id: string
+          last_synced_at: string
+          numero_folha: string
+          original_email: string | null
+          owner_user_id: string
+          status: Database["public"]["Enums"]["employee_email_status"]
+          updated_at: string
+        }
+        Insert: {
+          bank_id: string
+          bank_name: string
+          created_at?: string
+          current_email?: string | null
+          email_updated_at?: string | null
+          employee_name: string
+          employee_payload?: Json | null
+          employee_secullum_id?: number | null
+          id?: string
+          last_synced_at?: string
+          numero_folha: string
+          original_email?: string | null
+          owner_user_id: string
+          status?: Database["public"]["Enums"]["employee_email_status"]
+          updated_at?: string
+        }
+        Update: {
+          bank_id?: string
+          bank_name?: string
+          created_at?: string
+          current_email?: string | null
+          email_updated_at?: string | null
+          employee_name?: string
+          employee_payload?: Json | null
+          employee_secullum_id?: number | null
+          id?: string
+          last_synced_at?: string
+          numero_folha?: string
+          original_email?: string | null
+          owner_user_id?: string
+          status?: Database["public"]["Enums"]["employee_email_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       public_link_settings: {
         Row: {
           bank_id: string
@@ -301,6 +355,7 @@ export type Database = {
     }
     Enums: {
       email_update_status: "pending" | "approved" | "rejected"
+      employee_email_status: "had_email" | "updated_via_link" | "no_email"
       execution_status: "pending" | "running" | "success" | "error"
       schedule_period_type:
         | "last_7_days"
@@ -438,6 +493,7 @@ export const Constants = {
   public: {
     Enums: {
       email_update_status: ["pending", "approved", "rejected"],
+      employee_email_status: ["had_email", "updated_via_link", "no_email"],
       execution_status: ["pending", "running", "success", "error"],
       schedule_period_type: [
         "last_7_days",
