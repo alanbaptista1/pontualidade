@@ -7,31 +7,62 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AUTH_BASE = "https://autenticador.secullum.com.br";
-const API_BASE = "https://pontowebintegracaoexterna.secullum.com.br/IntegracaoExterna";
-
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-async function getSecullumToken(username: string, password: string, clientId: string) {
-  const body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${clientId}`;
-  const res = await fetch(`${AUTH_BASE}/Token`, {
+async function callSecullumProxy(body: unknown) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/secullum-proxy`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    headers: {
+      "Content-Type": "application/json",
+      apikey: ANON_KEY,
+      Authorization: `Bearer ${ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
   });
+
   const text = await res.text();
-  let data: Record<string, unknown> = {};
+  let data: unknown = null;
+
   if (text) {
-    try { data = JSON.parse(text); } catch { /* keep empty */ }
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
   }
+
   if (!res.ok) {
-    const desc = (data as { error_description?: string }).error_description;
-    throw new Error(desc || `Falha de autenticação Secullum (HTTP ${res.status})`);
+    const message =
+      typeof data === "object" && data !== null && "error" in data && typeof (data as { error?: unknown }).error === "string"
+        ? (data as { error: string }).error
+        : `Falha na integração Secullum (HTTP ${res.status})`;
+    throw new Error(message);
   }
-  const token = (data as { access_token?: string }).access_token;
-  if (!token) throw new Error("Secullum não retornou access_token");
-  return token;
+
+  return data;
+}
+
+function buildSecullumPayload(employee: Record<string, unknown>, requestedEmail: string) {
+  const horario = employee.Horario as { Numero?: unknown } | undefined;
+  const departamento = employee.Departamento as { Descricao?: unknown } | undefined;
+  const funcao = employee.Funcao as { Descricao?: unknown } | undefined;
+  const empresa = employee.Empresa as { Documento?: unknown } | undefined;
+
+  return {
+    Nome: employee.Nome ?? null,
+    NumeroFolha: employee.NumeroFolha ?? null,
+    NumeroIdentificador: employee.NumeroIdentificador ?? null,
+    Cpf: employee.Cpf ?? null,
+    Admissao: employee.Admissao ?? null,
+    EmpresaCnpjCpf: empresa?.Documento ?? employee.EmpresaCnpjCpf ?? null,
+    HorarioNumero: horario?.Numero ?? employee.HorarioNumero ?? null,
+    DepartamentoDescricao: departamento?.Descricao ?? employee.DepartamentoDescricao ?? null,
+    FuncaoDescricao: funcao?.Descricao ?? employee.FuncaoDescricao ?? null,
+    DuplicarDemitido: false,
+    Email: requestedEmail,
+  };
 }
 
 serve(async (req) => {
@@ -105,72 +136,58 @@ serve(async (req) => {
       });
     }
 
-    // APPROVE: enviar à Secullum
     const { data: creds, error: credsErr } = await admin
       .from("secullum_credentials")
-      .select("secullum_username, secullum_password, client_id")
+      .select("secullum_username, secullum_password")
       .eq("user_id", userId)
       .maybeSingle();
     if (credsErr) throw credsErr;
     if (!creds) throw new Error("Credenciais Secullum não configuradas");
 
-    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, creds.client_id);
-
-    const emp = request.employee_payload as Record<string, unknown>;
-
-    // Mantém TODOS os dados originais do funcionário, alterando apenas o Email
-    // e garantindo DuplicarDemitido = false
-    const payload: Record<string, unknown> = {
-      ...emp,
-      HorarioNumero:
-        (emp.Horario as { Numero?: unknown } | undefined)?.Numero ?? emp.HorarioNumero,
-      DepartamentoDescricao:
-        (emp.Departamento as { Descricao?: unknown } | undefined)?.Descricao ??
-        emp.DepartamentoDescricao,
-      FuncaoDescricao:
-        (emp.Funcao as { Descricao?: unknown } | undefined)?.Descricao ?? emp.FuncaoDescricao,
-      DuplicarDemitido: false,
-      Email: request.requested_email,
-    };
-
-    const url = `${API_BASE}/Funcionarios/`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        secullumidbancoselecionado: String(request.bank_id),
-        "Content-Type": "application/json",
+    const loginResponse = (await callSecullumProxy({
+      action: "login",
+      payload: {
+        username: creds.secullum_username,
+        password: creds.secullum_password,
       },
-      body: JSON.stringify(payload),
-    });
+    })) as { access_token?: string };
 
-    const text = await res.text();
-    let parsed: unknown = text;
-    try { parsed = JSON.parse(text); } catch { /* keep text */ }
-
-    if (!res.ok) {
-      await admin
-        .from("email_update_requests")
-        .update({
-          secullum_response: { status: res.status, body: parsed },
-        })
-        .eq("id", requestId);
-
-      const msg = typeof parsed === "string" ? parsed : (parsed as any)?.Message ?? `Erro HTTP ${res.status}`;
-      throw new Error(`Secullum recusou: ${msg}`);
+    if (!loginResponse?.access_token) {
+      throw new Error("Não foi possível obter token da Secullum");
     }
+
+    const employee = request.employee_payload as Record<string, unknown>;
+    const payload = buildSecullumPayload(employee, request.requested_email);
+
+    console.log("approve-email-update payload:", JSON.stringify({
+      endpoint: "Funcionarios",
+      method: "POST",
+      bankId: String(request.bank_id),
+      body: payload,
+    }));
+
+    const secullumResponse = await callSecullumProxy({
+      action: "api-request",
+      payload: {
+        token: loginResponse.access_token,
+        bankId: String(request.bank_id),
+        endpoint: "Funcionarios",
+        method: "POST",
+        body: payload,
+      },
+    });
 
     await admin
       .from("email_update_requests")
       .update({
         status: "approved",
-        secullum_response: { status: res.status, body: parsed },
+        secullum_response: secullumResponse,
         processed_at: new Date().toISOString(),
         processed_by: userId,
       })
       .eq("id", requestId);
 
-    return new Response(JSON.stringify({ success: true, secullum: parsed }), {
+    return new Response(JSON.stringify({ success: true, secullum: secullumResponse, sentPayload: payload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
