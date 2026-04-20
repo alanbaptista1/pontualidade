@@ -6,11 +6,13 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import authHero from "@/assets/auth-hero.jpg";
+
+const REMEMBERED_EMAIL_KEY = "pontualidade:remembered-email";
 
 const signUpSchema = z.object({
   displayName: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres").max(80),
@@ -27,10 +29,19 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const [signIn, setSignIn] = useState({ email: "", password: "" });
   const [signUp, setSignUp] = useState({ displayName: "", email: "", password: "" });
+  const [rememberEmail, setRememberEmail] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (saved) {
+      setSignIn((p) => ({ ...p, email: saved }));
+      setRememberEmail(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && user) navigate("/relatorio", { replace: true });
@@ -55,6 +66,11 @@ const AuthPage = () => {
         : error.message;
       toast({ title: "Falha no login", description: msg, variant: "destructive" });
       return;
+    }
+    if (rememberEmail) {
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, parsed.data.email);
+    } else {
+      localStorage.removeItem(REMEMBERED_EMAIL_KEY);
     }
     toast({ title: "Bem-vindo!", description: "Login realizado." });
   };
@@ -87,109 +103,218 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
-      >
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <Clock className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Controle de Pontualidade
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Acesse sua conta para gerenciar relatórios e agendamentos
-          </p>
-        </div>
+    <div className="flex min-h-screen w-full bg-background">
+      {/* Left side - Hero */}
+      <div className="relative hidden lg:flex lg:w-1/2 xl:w-[55%]">
+        <img
+          src={authHero}
+          alt="Controle de pontualidade"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/40 via-background/60 to-background/85" />
+        <div className="relative z-10 flex h-full w-full flex-col justify-between p-12 xl:p-16">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/90 backdrop-blur-sm">
+              <Clock className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-foreground">
+              Pontualidade
+            </span>
+          </motion.div>
 
-        <Card className="shadow-[var(--shadow-elevated)]">
-          <CardHeader className="pb-2 pt-6">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Criar conta</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            {tab === "signin" ? (
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">E-mail</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    autoComplete="email"
-                    value={signIn.email}
-                    onChange={(e) => setSignIn((p) => ({ ...p, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={signIn.password}
-                    onChange={(e) => setSignIn((p) => ({ ...p, password: e.target.value }))}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                  Entrar
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nome</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    autoComplete="name"
-                    value={signUp.displayName}
-                    onChange={(e) => setSignUp((p) => ({ ...p, displayName: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">E-mail</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    autoComplete="email"
-                    value={signUp.email}
-                    onChange={(e) => setSignUp((p) => ({ ...p, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={signUp.password}
-                    onChange={(e) => setSignUp((p) => ({ ...p, password: e.target.value }))}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">Mínimo 8 caracteres.</p>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="max-w-xl space-y-6"
+          >
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground xl:text-5xl">
+              Controle a pontualidade da sua equipe com clareza.
+            </h1>
+            <p className="text-lg text-muted-foreground xl:text-xl">
+              Relatórios precisos, agendamentos automáticos e visão completa dos atrasos —
+              tudo em um único lugar.
+            </p>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-sm text-muted-foreground/80"
+          >
+            © {new Date().getFullYear()} Pontualidade. Todos os direitos reservados.
+          </motion.p>
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <div className="flex w-full flex-col items-center justify-center p-6 sm:p-10 lg:w-1/2 xl:w-[45%]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md"
+        >
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary">
+              <Clock className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">Pontualidade</span>
+          </div>
+
+          <div className="mb-8 space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
+              {mode === "signin" ? "Bem-vindo de volta" : "Criar sua conta"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {mode === "signin"
+                ? "Entre com seu e-mail e senha para acessar."
+                : "Preencha os dados abaixo para começar."}
+            </p>
+          </div>
+
+          {mode === "signin" ? (
+            <form onSubmit={handleSignIn} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email">E-mail</Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  className="h-11 rounded-lg"
+                  value={signIn.email}
+                  onChange={(e) => setSignIn((p) => ({ ...p, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password">Senha</Label>
+                <Input
+                  id="signin-password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="h-11 rounded-lg"
+                  value={signIn.password}
+                  onChange={(e) => setSignIn((p) => ({ ...p, password: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember-email"
+                  checked={rememberEmail}
+                  onCheckedChange={(c) => setRememberEmail(c === true)}
+                />
+                <Label
+                  htmlFor="remember-email"
+                  className="cursor-pointer text-sm font-normal text-muted-foreground"
+                >
+                  Salvar meu e-mail
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-lg text-base font-semibold shadow-[var(--shadow-elevated)]"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <LogIn className="mr-2 h-4 w-4" />
+                )}
+                Entrar
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Não tem uma conta?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className="font-semibold text-primary transition-colors hover:text-primary/80"
+                >
                   Criar conta
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+                </button>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={handleSignUp} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">Nome</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  autoComplete="name"
+                  className="h-11 rounded-lg"
+                  value={signUp.displayName}
+                  onChange={(e) => setSignUp((p) => ({ ...p, displayName: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">E-mail</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  className="h-11 rounded-lg"
+                  value={signUp.email}
+                  onChange={(e) => setSignUp((p) => ({ ...p, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Senha</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
+                  className="h-11 rounded-lg"
+                  value={signUp.password}
+                  onChange={(e) => setSignUp((p) => ({ ...p, password: e.target.value }))}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-lg text-base font-semibold shadow-[var(--shadow-elevated)]"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="mr-2 h-4 w-4" />
+                )}
+                Criar conta
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Já tem uma conta?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="font-semibold text-primary transition-colors hover:text-primary/80"
+                >
+                  Entrar
+                </button>
+              </p>
+            </form>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 };
