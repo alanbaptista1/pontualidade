@@ -12,6 +12,8 @@ import LoginPage from "./pages/LoginPage";
 import ReportPage from "./pages/ReportPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SchedulesPage from "./pages/SchedulesPage";
+import EmailUpdatesPage from "./pages/EmailUpdatesPage";
+import PublicEmailUpdatePage from "./pages/PublicEmailUpdatePage";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -33,6 +35,8 @@ const App = () => (
                 <Route path="/relatorio" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
                 <Route path="/analises" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                 <Route path="/agendamentos" element={<ProtectedRoute><SchedulesPage /></ProtectedRoute>} />
+                <Route path="/atualizacoes-email" element={<ProtectedRoute><EmailUpdatesPage /></ProtectedRoute>} />
+                <Route path="/publico/atualizar-email/:userId" element={<PublicEmailUpdatePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SecullumProvider>

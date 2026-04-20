@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_update_requests: {
+        Row: {
+          bank_id: string
+          bank_name: string
+          created_at: string
+          current_email: string | null
+          employee_name: string
+          employee_payload: Json
+          employee_secullum_id: number | null
+          id: string
+          numero_folha: string
+          owner_user_id: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          requested_email: string
+          secullum_response: Json | null
+          status: Database["public"]["Enums"]["email_update_status"]
+          updated_at: string
+        }
+        Insert: {
+          bank_id: string
+          bank_name: string
+          created_at?: string
+          current_email?: string | null
+          employee_name: string
+          employee_payload: Json
+          employee_secullum_id?: number | null
+          id?: string
+          numero_folha: string
+          owner_user_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          requested_email: string
+          secullum_response?: Json | null
+          status?: Database["public"]["Enums"]["email_update_status"]
+          updated_at?: string
+        }
+        Update: {
+          bank_id?: string
+          bank_name?: string
+          created_at?: string
+          current_email?: string | null
+          employee_name?: string
+          employee_payload?: Json
+          employee_secullum_id?: number | null
+          id?: string
+          numero_folha?: string
+          owner_user_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          requested_email?: string
+          secullum_response?: Json | null
+          status?: Database["public"]["Enums"]["email_update_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -33,6 +93,36 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      public_link_settings: {
+        Row: {
+          bank_id: string
+          bank_name: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_id: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_id?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -210,6 +300,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      email_update_status: "pending" | "approved" | "rejected"
       execution_status: "pending" | "running" | "success" | "error"
       schedule_period_type:
         | "last_7_days"
@@ -346,6 +437,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      email_update_status: ["pending", "approved", "rejected"],
       execution_status: ["pending", "running", "success", "error"],
       schedule_period_type: [
         "last_7_days",
