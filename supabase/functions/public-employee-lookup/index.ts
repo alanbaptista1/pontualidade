@@ -17,11 +17,22 @@ async function getSecullumToken(username: string, password: string, clientId: st
   const body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${clientId}`;
   const res = await fetch(`${AUTH_BASE}/Token`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || "Falha de autenticação Secullum");
+  const text = await res.text();
+  if (!res.ok) {
+    console.error("Secullum Token error:", res.status, text.slice(0, 300));
+    throw new Error(`Falha de autenticação Secullum (HTTP ${res.status})`);
+  }
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error("Secullum Token returned non-JSON:", text.slice(0, 300));
+    throw new Error("Resposta inválida do autenticador Secullum");
+  }
+  if (!data?.access_token) throw new Error("Token Secullum ausente na resposta");
   return data.access_token as string;
 }
 
