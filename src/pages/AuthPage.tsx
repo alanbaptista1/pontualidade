@@ -44,7 +44,7 @@ const AuthPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user) navigate("/relatorio", { replace: true });
+    if (!authLoading && user) navigate("/", { replace: true });
   }, [user, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
