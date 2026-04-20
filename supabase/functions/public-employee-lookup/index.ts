@@ -161,7 +161,7 @@ serve(async (req) => {
     }
 
     const employee = allEmployees.find(
-      (item: any) => String(item.NumeroFolha ?? "").trim() === folhaSearch && !item.Demissao
+      (item: Record<string, unknown>) => String(item.NumeroFolha ?? "").trim() === folhaSearch && !item.Demissao
     );
 
     if (!employee) {
