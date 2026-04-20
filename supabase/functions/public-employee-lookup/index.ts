@@ -65,17 +65,31 @@ serve(async (req) => {
       });
     }
 
-    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, creds.client_id);
+    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, creds.client_id || "7");
 
     // Busca lista de funcionários
     const empRes = await fetch(`${API_BASE}/Funcionarios`, {
       headers: {
         Authorization: `Bearer ${token}`,
         secullumidbancoselecionado: String(settings.bank_id),
+        Accept: "application/json",
       },
     });
-    const allEmployees = await empRes.json();
-    if (!empRes.ok) throw new Error(typeof allEmployees === "string" ? allEmployees : "Falha ao buscar funcionários");
+    const empText = await empRes.text();
+    if (!empRes.ok) {
+      console.error("Secullum Funcionarios error:", empRes.status, empText.slice(0, 500));
+      throw new Error(`Falha ao buscar funcionários (HTTP ${empRes.status})`);
+    }
+    let allEmployees: any[];
+    try {
+      allEmployees = JSON.parse(empText);
+    } catch (e) {
+      console.error("Failed to parse Funcionarios JSON. First 500 chars:", empText.slice(0, 500));
+      throw new Error("Resposta inválida da Secullum ao listar funcionários");
+    }
+    if (!Array.isArray(allEmployees)) {
+      throw new Error("Resposta inesperada da Secullum (não é lista)");
+    }
 
     const folhaSearch = String(numeroFolha ?? "").trim();
     if (!folhaSearch) throw new Error("Informe o código (Número da Folha)");
