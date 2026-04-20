@@ -7,53 +7,109 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AUTH_BASE = "https://autenticador.secullum.com.br";
-const API_BASE = "https://pontowebintegracaoexterna.secullum.com.br/IntegracaoExterna";
-
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-async function getSecullumToken(username: string, password: string, clientId: string) {
-  const body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${clientId}`;
-  const res = await fetch(`${AUTH_BASE}/Token`, {
+async function callSecullumProxy(body: unknown) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/secullum-proxy`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body,
+    headers: {
+      "Content-Type": "application/json",
+      apikey: ANON_KEY,
+      Authorization: `Bearer ${ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
   });
+
   const text = await res.text();
+  let data: unknown = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
+
   if (!res.ok) {
-    console.error("Secullum Token error:", res.status, text.slice(0, 300));
-    throw new Error(`Falha de autenticação Secullum (HTTP ${res.status})`);
+    const message =
+      typeof data === "object" && data !== null && "error" in data && typeof (data as { error?: unknown }).error === "string"
+        ? (data as { error: string }).error
+        : `Falha na integração Secullum (HTTP ${res.status})`;
+    throw new Error(message);
   }
-  let data: any;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    console.error("Secullum Token returned non-JSON:", text.slice(0, 300));
-    throw new Error("Resposta inválida do autenticador Secullum");
-  }
-  if (!data?.access_token) throw new Error("Token Secullum ausente na resposta");
-  return data.access_token as string;
+
+  return data;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
-    const { action, ownerUserId, numeroFolha, requestedEmail } = await req.json();
+    const rawBody = await req.text();
+    if (!rawBody) {
+      return new Response(JSON.stringify({ error: "Requisição inválida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    if (!ownerUserId) throw new Error("Link inválido");
+    let parsedBody: {
+      action?: string;
+      ownerUserId?: string;
+      numeroFolha?: string;
+      requestedEmail?: string;
+    };
+
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "JSON inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { action, ownerUserId, numeroFolha, requestedEmail } = parsedBody;
+
+    if (!ownerUserId) {
+      return new Response(JSON.stringify({ error: "Link inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action !== "lookup" && action !== "submit") {
+      return new Response(JSON.stringify({ error: "Ação desconhecida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const folhaSearch = String(numeroFolha ?? "").trim();
+    if (!folhaSearch) {
+      return new Response(JSON.stringify({ error: "Informe o código (Número da Folha)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // 1. Carrega config do link público
     const { data: settings, error: settingsErr } = await admin
       .from("public_link_settings")
       .select("bank_id, bank_name, is_enabled")
       .eq("user_id", ownerUserId)
       .maybeSingle();
 
-    if (settingsErr) throw settingsErr;
+    if (settingsErr) {
+      throw settingsErr;
+    }
+
     if (!settings || !settings.is_enabled) {
       return new Response(JSON.stringify({ error: "Link público não está ativo" }), {
         status: 403,
@@ -61,14 +117,16 @@ serve(async (req) => {
       });
     }
 
-    // 2. Carrega credenciais Secullum do dono
     const { data: creds, error: credsErr } = await admin
       .from("secullum_credentials")
-      .select("secullum_username, secullum_password, client_id")
+      .select("secullum_username, secullum_password")
       .eq("user_id", ownerUserId)
       .maybeSingle();
 
-    if (credsErr) throw credsErr;
+    if (credsErr) {
+      throw credsErr;
+    }
+
     if (!creds) {
       return new Response(JSON.stringify({ error: "Credenciais Secullum não configuradas pelo administrador" }), {
         status: 503,
@@ -76,38 +134,34 @@ serve(async (req) => {
       });
     }
 
-    // Always client_id=3, matching secullum-proxy login flow
-    const token = await getSecullumToken(creds.secullum_username, creds.secullum_password, "3");
+    const loginResponse = await callSecullumProxy({
+      action: "login",
+      payload: {
+        username: creds.secullum_username,
+        password: creds.secullum_password,
+      },
+    }) as { access_token?: string };
 
-    // Busca lista de funcionários
-    const empRes = await fetch(`${API_BASE}/Funcionarios`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        secullumidbancoselecionado: String(settings.bank_id),
-        Accept: "application/json",
+    if (!loginResponse?.access_token) {
+      throw new Error("Não foi possível obter token da Secullum");
+    }
+
+    const allEmployees = await callSecullumProxy({
+      action: "api-request",
+      payload: {
+        token: loginResponse.access_token,
+        bankId: settings.bank_id,
+        endpoint: "Funcionarios",
+        method: "GET",
       },
     });
-    const empText = await empRes.text();
-    if (!empRes.ok) {
-      console.error("Secullum Funcionarios error:", empRes.status, empText.slice(0, 500));
-      throw new Error(`Falha ao buscar funcionários (HTTP ${empRes.status})`);
-    }
-    let allEmployees: any[];
-    try {
-      allEmployees = JSON.parse(empText);
-    } catch (e) {
-      console.error("Failed to parse Funcionarios JSON. First 500 chars:", empText.slice(0, 500));
-      throw new Error("Resposta inválida da Secullum ao listar funcionários");
-    }
+
     if (!Array.isArray(allEmployees)) {
-      throw new Error("Resposta inesperada da Secullum (não é lista)");
+      throw new Error("Resposta inesperada da Secullum ao listar funcionários");
     }
 
-    const folhaSearch = String(numeroFolha ?? "").trim();
-    if (!folhaSearch) throw new Error("Informe o código (Número da Folha)");
-
-    const employee = (allEmployees as any[]).find(
-      (e) => String(e.NumeroFolha ?? "").trim() === folhaSearch && !e.Demissao
+    const employee = allEmployees.find(
+      (item: any) => String(item.NumeroFolha ?? "").trim() === folhaSearch && !item.Demissao
     );
 
     if (!employee) {
@@ -117,7 +171,6 @@ serve(async (req) => {
       });
     }
 
-    // ACTION: lookup -> retorna apenas nome
     if (action === "lookup") {
       return new Response(
         JSON.stringify({
@@ -125,43 +178,40 @@ serve(async (req) => {
           numeroFolha: employee.NumeroFolha,
           currentEmail: employee.Email ?? null,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
-    // ACTION: submit -> cria solicitação
-    if (action === "submit") {
-      const email = String(requestedEmail ?? "").trim();
-      const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!emailValid) {
-        return new Response(JSON.stringify({ error: "Email inválido" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const email = String(requestedEmail ?? "").trim();
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-      const { error: insErr } = await admin.from("email_update_requests").insert({
-        owner_user_id: ownerUserId,
-        bank_id: String(settings.bank_id),
-        bank_name: settings.bank_name,
-        numero_folha: String(employee.NumeroFolha),
-        employee_name: employee.Nome,
-        employee_secullum_id: employee.Id ?? null,
-        employee_payload: employee,
-        current_email: employee.Email ?? null,
-        requested_email: email,
-        status: "pending",
-      });
-
-      if (insErr) throw insErr;
-
-      return new Response(JSON.stringify({ success: true }), {
+    if (!emailValid) {
+      return new Response(JSON.stringify({ error: "Email inválido" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ error: "Ação desconhecida" }), {
-      status: 400,
+    const { error: insErr } = await admin.from("email_update_requests").insert({
+      owner_user_id: ownerUserId,
+      bank_id: String(settings.bank_id),
+      bank_name: settings.bank_name,
+      numero_folha: String(employee.NumeroFolha),
+      employee_name: employee.Nome,
+      employee_secullum_id: employee.Id ?? null,
+      employee_payload: employee,
+      current_email: employee.Email ?? null,
+      requested_email: email,
+      status: "pending",
+    });
+
+    if (insErr) {
+      throw insErr;
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
