@@ -109,17 +109,17 @@ serve(async (req) => {
 
     const emp = request.employee_payload as Record<string, unknown>;
 
-    // Monta payload obrigatório com email atualizado
+    // Mantém TODOS os dados originais do funcionário, alterando apenas o Email
+    // e garantindo DuplicarDemitido = false
     const payload: Record<string, unknown> = {
-      Nome: emp.Nome,
-      NumeroFolha: emp.NumeroFolha,
-      NumeroIdentificador: emp.NumeroIdentificador,
-      Cpf: emp.Cpf,
-      Admissao: emp.Admissao,
-      EmpresaCnpjCpf: emp.EmpresaCnpjCpf,
-      HorarioNumero: (emp.Horario as any)?.Numero ?? emp.HorarioNumero,
-      DepartamentoDescricao: (emp.Departamento as any)?.Descricao ?? emp.DepartamentoDescricao,
-      FuncaoDescricao: (emp.Funcao as any)?.Descricao ?? emp.FuncaoDescricao,
+      ...emp,
+      HorarioNumero:
+        (emp.Horario as { Numero?: unknown } | undefined)?.Numero ?? emp.HorarioNumero,
+      DepartamentoDescricao:
+        (emp.Departamento as { Descricao?: unknown } | undefined)?.Descricao ??
+        emp.DepartamentoDescricao,
+      FuncaoDescricao:
+        (emp.Funcao as { Descricao?: unknown } | undefined)?.Descricao ?? emp.FuncaoDescricao,
       DuplicarDemitido: false,
       Email: request.requested_email,
     };
