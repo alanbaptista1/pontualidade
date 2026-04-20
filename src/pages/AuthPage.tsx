@@ -72,7 +72,6 @@ const AuthPage = () => {
     } else {
       localStorage.removeItem(REMEMBERED_EMAIL_KEY);
     }
-    toast({ title: "Bem-vindo!", description: "Login realizado." });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
