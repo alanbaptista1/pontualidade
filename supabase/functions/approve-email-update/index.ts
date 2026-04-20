@@ -20,9 +20,18 @@ async function getSecullumToken(username: string, password: string, clientId: st
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || "Falha de autenticação Secullum");
-  return data.access_token as string;
+  const text = await res.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try { data = JSON.parse(text); } catch { /* keep empty */ }
+  }
+  if (!res.ok) {
+    const desc = (data as { error_description?: string }).error_description;
+    throw new Error(desc || `Falha de autenticação Secullum (HTTP ${res.status})`);
+  }
+  const token = (data as { access_token?: string }).access_token;
+  if (!token) throw new Error("Secullum não retornou access_token");
+  return token;
 }
 
 serve(async (req) => {
