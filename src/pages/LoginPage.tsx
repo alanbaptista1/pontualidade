@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, LogIn, Loader2, Sparkles } from "lucide-react";
+import { Clock, LogIn, Loader2, Sparkles, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,9 +26,14 @@ const LoginPage = () => {
   const [banks, setBanks] = useState<SecullumBank[]>([]);
   const [hasSavedCreds, setHasSavedCreds] = useState(false);
   const { setAuth } = useSecullum();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -132,7 +137,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleSignOut}
+        className="absolute right-4 top-4"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Sair
+      </Button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
