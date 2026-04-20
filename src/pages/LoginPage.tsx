@@ -137,7 +137,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleSignOut}
+        className="absolute right-4 top-4"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Sair
+      </Button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
