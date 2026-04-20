@@ -121,10 +121,10 @@ const LoginPage = () => {
             <Clock className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Controle de Pontualidade
+            Digite aqui suas credenciais Secullum
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Relatório de atrasos · Secullum Ponto Web
+            Uma vez digitado ficará salvo no seu login
           </p>
         </div>
 
