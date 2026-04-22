@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import authHero from "@/assets/auth-hero.jpg";
+import dubrasilLogo from "@/assets/dubrasil-logo.png";
 
 const REMEMBERED_EMAIL_KEY = "pontualidade:remembered-email";
 
@@ -116,14 +117,13 @@ const AuthPage = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-3"
+            className="flex items-center"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/90 backdrop-blur-sm">
-              <Clock className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground">
-              Pontualidade DuBrasil Soluções
-            </span>
+            <img
+              src={dubrasilLogo}
+              alt="Grupo DuBrasil Soluções"
+              className="h-12 w-auto xl:h-14"
+            />
           </motion.div>
 
           <motion.div
@@ -161,11 +161,12 @@ const AuthPage = () => {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary">
-              <Clock className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Pontualidade DuBrasil Soluções</span>
+          <div className="mb-8 flex items-center lg:hidden">
+            <img
+              src={dubrasilLogo}
+              alt="Grupo DuBrasil Soluções"
+              className="h-12 w-auto"
+            />
           </div>
 
           <div className="mb-8 space-y-2">
