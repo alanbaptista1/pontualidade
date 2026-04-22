@@ -137,7 +137,7 @@ const AppHeader = () => {
               <Clock className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-sm font-semibold text-foreground">Controle de Pontualidade</h1>
+              <h1 className="text-sm font-semibold text-foreground">Pontualidade DuBrasil Soluções</h1>
               <p className="text-xs text-muted-foreground">{auth?.bankName}</p>
             </div>
           </div>
