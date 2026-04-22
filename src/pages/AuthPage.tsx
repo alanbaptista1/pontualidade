@@ -122,7 +122,7 @@ const AuthPage = () => {
               <Clock className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-foreground">
-              Pontualidade
+              Pontualidade DuBrasil Soluções
             </span>
           </motion.div>
 
@@ -147,7 +147,7 @@ const AuthPage = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-sm text-muted-foreground/80"
           >
-            © {new Date().getFullYear()} Pontualidade. Todos os direitos reservados.
+            © {new Date().getFullYear()} Pontualidade DuBrasil Soluções. Todos os direitos reservados.
           </motion.p>
         </div>
       </div>
@@ -165,7 +165,7 @@ const AuthPage = () => {
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary">
               <Clock className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">Pontualidade</span>
+            <span className="text-lg font-semibold tracking-tight">Pontualidade DuBrasil Soluções</span>
           </div>
 
           <div className="mb-8 space-y-2">

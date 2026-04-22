@@ -11,7 +11,7 @@ const corsHeaders = {
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 // Without a verified domain, Resend only allows sending to the account owner's email.
-const FROM_ADDRESS = "Pontualidade <onboarding@resend.dev>";
+const FROM_ADDRESS = "Pontualidade DuBrasil Soluções <onboarding@resend.dev>";
 
 interface RequestPayload {
   execution_id: string;
@@ -60,7 +60,7 @@ function buildSuccessHtml(opts: {
 <p style="margin:0 0 24px;font-size:13px;line-height:1.5;word-break:break-all;"><a href="${opts.downloadUrl}" style="color:#2962cb;text-decoration:underline;">${opts.downloadUrl}</a></p>
 <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;text-align:center;">O link de download é válido por 7 dias.</p>
 </td></tr>
-<tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Pontualidade · Notificação automática</td></tr>
+<tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Pontualidade DuBrasil Soluções · Notificação automática</td></tr>
 </table>
 </td></tr></table>
 </body></html>`;
@@ -95,7 +95,7 @@ function buildErrorHtml(opts: {
 <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">Falhou em</td><td style="font-size:13px;color:#1f2937;text-align:right;font-weight:500;">${fmtDateTime(opts.finishedAt)}</td></tr>
 </table>
 </td></tr>
-<tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Pontualidade · Notificação automática</td></tr>
+<tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Pontualidade DuBrasil Soluções · Notificação automática</td></tr>
 </table>
 </td></tr></table>
 </body></html>`;
