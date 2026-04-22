@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Download, Printer, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,64 @@ interface PublicLinkQRCodeProps {
 const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [shortUrl, setShortUrl] = useState<string>("");
+  const [shortening, setShortening] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const shorten = async () => {
+      if (!url) {
+        setShortUrl("");
+        return;
+      }
+      setShortening(true);
+      try {
+        const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+        const text = await res.text();
+        if (!cancelled && text.startsWith("http")) {
+          setShortUrl(text.trim());
+        } else if (!cancelled) {
+          setShortUrl(url);
+        }
+      } catch {
+        if (!cancelled) setShortUrl(url);
+      } finally {
+        if (!cancelled) setShortening(false);
+      }
+    };
+    shorten();
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
 
   const getCanvas = () => containerRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+
+  const displayUrl = shortUrl || url;
 
   const handleDownload = () => {
     const canvas = getCanvas();
     if (!canvas) return;
+
+    // Compose a new canvas with QR + short URL text below
+    const padding = 24;
+    const textHeight = 56;
+    const out = document.createElement("canvas");
+    out.width = canvas.width + padding * 2;
+    out.height = canvas.height + padding * 2 + textHeight;
+    const ctx = out.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(canvas, padding, padding);
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(displayUrl, out.width / 2, canvas.height + padding + 36);
+
     const link = document.createElement("a");
     link.download = `qrcode-atualizar-email${bankName ? `-${bankName.replace(/\s+/g, "-").toLowerCase()}` : ""}.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = out.toDataURL("image/png");
     link.click();
     toast({ title: "QR Code baixado" });
   };
@@ -68,7 +117,25 @@ const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
               border: 1px solid #e5e7eb;
             }
             img { display: block; width: 280px; height: 280px; }
-            .steps { margin-top: 32px; text-align: left; font-size: 14px; color: #374151; }
+            .short-url {
+              margin-top: 20px;
+              padding: 12px 20px;
+              background: #f3f4f6;
+              border-radius: 12px;
+              font-size: 18px;
+              font-weight: 700;
+              color: #111827;
+              letter-spacing: 0.02em;
+              word-break: break-all;
+            }
+            .short-url-label {
+              margin-top: 16px;
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+            }
+            .steps { margin-top: 28px; text-align: left; font-size: 14px; color: #374151; }
             .steps strong { color: #111827; }
             .steps ol { padding-left: 20px; margin: 8px 0 0; }
             .steps li { margin-bottom: 6px; }
@@ -86,6 +153,8 @@ const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
             <div class="qr-wrap">
               <img src="${dataUrl}" alt="QR Code" />
             </div>
+            <div class="short-url-label">ou acesse pelo link</div>
+            <div class="short-url">${displayUrl}</div>
             <div class="steps">
               <strong>Como usar:</strong>
               <ol>
@@ -118,11 +187,11 @@ const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
           </span>
         </div>
         <div className="flex gap-1">
-          <Button onClick={handleDownload} variant="outline" size="sm">
+          <Button onClick={handleDownload} variant="outline" size="sm" disabled={shortening}>
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Baixar
           </Button>
-          <Button onClick={handlePrint} variant="default" size="sm">
+          <Button onClick={handlePrint} variant="default" size="sm" disabled={shortening}>
             <Printer className="mr-1.5 h-3.5 w-3.5" />
             Imprimir
           </Button>
@@ -146,12 +215,14 @@ const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
         <div className="flex-1 space-y-2 text-sm">
           <p className="font-semibold text-foreground">Pronto para colar na parede</p>
           <p className="text-muted-foreground">
-            Os funcionários escaneiam o QR Code com a câmera do celular e são levados direto à página
-            para cadastrar o e-mail.
+            Os funcionários escaneiam o QR Code ou digitam o link curto abaixo.
           </p>
+          <div className="rounded-md border border-border bg-background px-3 py-2 font-mono text-xs">
+            {shortening ? "Gerando link curto…" : displayUrl}
+          </div>
           <p className="text-xs text-muted-foreground">
-            Use <strong className="text-foreground">Imprimir</strong> para gerar um cartaz pronto com
-            instruções, ou <strong className="text-foreground">Baixar</strong> para usar a imagem em outro lugar.
+            Use <strong className="text-foreground">Imprimir</strong> para o cartaz pronto ou{" "}
+            <strong className="text-foreground">Baixar</strong> para a imagem com o link.
           </p>
         </div>
       </div>
