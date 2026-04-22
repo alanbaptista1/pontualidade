@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import PublicLinkQRCode from "@/components/PublicLinkQRCode";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSecullum } from "@/contexts/SecullumContext";
@@ -270,6 +271,10 @@ const EmailUpdatesPage = () => {
                   {settings.is_enabled ? "Ativo" : "Desativado"}
                 </p>
               </div>
+            )}
+
+            {settings && settings.is_enabled && (
+              <PublicLinkQRCode url={publicUrl} bankName={settings.bank_name} />
             )}
           </CardContent>
         </Card>
