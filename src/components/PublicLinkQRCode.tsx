@@ -25,7 +25,7 @@ const PublicLinkQRCode = ({ url, bankName }: PublicLinkQRCodeProps) => {
       setShortening(true);
       try {
         const res = await fetch(
-          `https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`
+          `https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`
         );
         const text = (await res.text()).trim();
         if (!cancelled && text.startsWith("http")) {
