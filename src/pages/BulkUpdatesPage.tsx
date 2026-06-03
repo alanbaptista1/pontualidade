@@ -96,12 +96,19 @@ const BulkUpdatesPage = () => {
     return Array.from(map.entries()).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
-  const horarios = useMemo<OptionItem[]>(() => {
-    const map = new Map<number, string>();
+  const horarios = useMemo<Array<OptionItem & { numero: number }>>(() => {
+    const map = new Map<number, { label: string; numero: number }>();
     funcionarios.forEach((f) => {
-      if (f.Horario?.Id) map.set(f.Horario.Id, f.Horario.Descricao ?? `#${f.Horario.Id}`);
+      if (f.Horario?.Id) {
+        map.set(f.Horario.Id, {
+          label: f.Horario.Descricao ?? `#${f.Horario.Id}`,
+          numero: f.Horario.Numero ?? 0,
+        });
+      }
     });
-    return Array.from(map.entries()).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(map.entries())
+      .map(([id, v]) => ({ id, label: v.label, numero: v.numero }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
   const filtered = useMemo(() => {
