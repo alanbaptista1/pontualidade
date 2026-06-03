@@ -475,7 +475,7 @@ const BulkUpdatesPage = () => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button disabled={!newOption || targets.length === 0 || executing}>
+                  <Button disabled={!hasChange || targets.length === 0 || executing}>
                     {executing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                     Aplicar alteração
                   </Button>
@@ -485,10 +485,19 @@ const BulkUpdatesPage = () => {
                     <AlertDialogTitle>Confirmar alteração em massa</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-2">
-                        <p>
-                          Você está prestes a alterar o campo <strong>{fieldKind === "horario" ? "Horário" : "Estrutura"}</strong>{" "}
-                          para <strong>{newOption?.label}</strong> em <strong>{targets.length}</strong> colaborador(es).
-                        </p>
+                        {fieldKind === "centroCustos" ? (
+                          <p>
+                            Você vai <strong>adicionar</strong> os centros de custos{" "}
+                            <strong>{Array.from(selectedCentrosCustos).join(", ")}</strong> em{" "}
+                            <strong>{targets.length}</strong> colaborador(es), preservando os já existentes.
+                          </p>
+                        ) : (
+                          <p>
+                            Você está prestes a alterar o campo{" "}
+                            <strong>{fieldKind === "horario" ? "Horário" : "Estrutura"}</strong> para{" "}
+                            <strong>{newOption?.label}</strong> em <strong>{targets.length}</strong> colaborador(es).
+                          </p>
+                        )}
                         <p className="text-xs">Esta ação é aplicada diretamente na Secullum e não pode ser desfeita automaticamente.</p>
                       </div>
                     </AlertDialogDescription>
