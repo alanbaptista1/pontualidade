@@ -66,6 +66,7 @@ const BulkUpdatesPage = () => {
 
   const [fieldKind, setFieldKind] = useState<FieldKind>("horario");
   const [newValueId, setNewValueId] = useState<string>("");
+  const [selectedCentrosCustos, setSelectedCentrosCustos] = useState<Set<string>>(new Set());
 
   const [executing, setExecuting] = useState(false);
   const [progress, setProgress] = useState(0);
