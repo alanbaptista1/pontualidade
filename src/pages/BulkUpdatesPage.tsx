@@ -118,6 +118,12 @@ const BulkUpdatesPage = () => {
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
+  const centrosCustosDisponiveis = useMemo<string[]>(() => {
+    const set = new Set<string>();
+    funcionarios.forEach((f) => getCentrosCustos(f).forEach((d) => set.add(d)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [funcionarios]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return funcionarios.filter((f) => {
