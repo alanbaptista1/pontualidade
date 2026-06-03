@@ -397,26 +397,68 @@ const BulkUpdatesPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Campo a alterar</Label>
-                <Select value={fieldKind} onValueChange={(v) => { setFieldKind(v as FieldKind); setNewValueId(""); }}>
+                <Select
+                  value={fieldKind}
+                  onValueChange={(v) => {
+                    setFieldKind(v as FieldKind);
+                    setNewValueId("");
+                    setSelectedCentrosCustos(new Set());
+                  }}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="horario">Horário</SelectItem>
                     <SelectItem value="estrutura">Estrutura</SelectItem>
+                    <SelectItem value="centroCustos">Centro de custos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Novo valor</Label>
-                <Select value={newValueId} onValueChange={setNewValueId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {currentOptions.map((o) => (
-                      <SelectItem key={o.id} value={String(o.id)}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {fieldKind !== "centroCustos" ? (
+                <div className="space-y-2">
+                  <Label>Novo valor</Label>
+                  <Select value={newValueId} onValueChange={setNewValueId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {currentOptions.map((o) => (
+                        <SelectItem key={o.id} value={String(o.id)}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Centros de custos a adicionar ({selectedCentrosCustos.size} selecionado(s))</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Os centros já vinculados ao colaborador são preservados. Apenas os novos serão adicionados.
+                  </p>
+                </div>
+              )}
             </div>
+
+            {fieldKind === "centroCustos" && (
+              <div className="max-h-64 overflow-auto rounded-md border border-border p-3">
+                {centrosCustosDisponiveis.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhum centro de custo encontrado nos colaboradores carregados.
+                  </p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {centrosCustosDisponiveis.map((d) => (
+                      <label
+                        key={d}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={selectedCentrosCustos.has(d)}
+                          onCheckedChange={() => toggleCentroCusto(d)}
+                        />
+                        <span className="text-sm">{d}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3">
               <div className="text-sm">
