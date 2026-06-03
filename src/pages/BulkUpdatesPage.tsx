@@ -180,20 +180,52 @@ const BulkUpdatesPage = () => {
     const empresa = (f as { Empresa?: { Documento?: string } }).Empresa;
     const estrutura = getEstrutura(f);
 
+    const raw = f as Record<string, unknown>;
+    const passthrough = [
+      "NumeroPis",
+      "Carteira",
+      "Observacao",
+      "Endereco",
+      "Bairro",
+      "Uf",
+      "Cep",
+      "Telefone",
+      "Celular",
+      "Rg",
+      "ExpedicaoRg",
+      "Ssp",
+      "Mae",
+      "Pai",
+      "Nascimento",
+      "NaoVerificarDigital",
+      "Masculino",
+      "Master",
+      "Nacionalidade",
+      "Naturalidade",
+      "EscolaridadeId",
+      "NumeroProvisorio",
+      "CodigoHolerite",
+    ] as const;
+
     const payload: Record<string, unknown> = {
       Nome: f.Nome ?? null,
       NumeroFolha: f.NumeroFolha ?? null,
-      NumeroIdentificador: (f as { NumeroIdentificador?: unknown }).NumeroIdentificador ?? null,
+      NumeroIdentificador: raw.NumeroIdentificador ?? null,
       Cpf: f.Cpf ?? null,
-      Admissao: (f as { Admissao?: unknown }).Admissao ?? null,
-      EmpresaCnpjCpf: empresa?.Documento ?? (f as { EmpresaCnpjCpf?: unknown }).EmpresaCnpjCpf ?? null,
-      HorarioNumero: horario?.Numero ?? (f as { HorarioNumero?: unknown }).HorarioNumero ?? null,
-      DepartamentoDescricao: departamento?.Descricao ?? (f as { DepartamentoDescricao?: unknown }).DepartamentoDescricao ?? null,
-      FuncaoDescricao: funcao?.Descricao ?? (f as { FuncaoDescricao?: unknown }).FuncaoDescricao ?? null,
-      EstruturaDescricao: estrutura?.Descricao ?? (f as { EstruturaDescricao?: unknown }).EstruturaDescricao ?? null,
-      Email: (f as { Email?: unknown }).Email ?? null,
+      Admissao: raw.Admissao ?? null,
+      EmpresaCnpjCpf: empresa?.Documento ?? raw.EmpresaCnpjCpf ?? null,
+      HorarioNumero: horario?.Numero ?? raw.HorarioNumero ?? null,
+      DepartamentoDescricao: departamento?.Descricao ?? raw.DepartamentoDescricao ?? null,
+      FuncaoDescricao: funcao?.Descricao ?? raw.FuncaoDescricao ?? null,
+      EstruturaDescricao: estrutura?.Descricao ?? raw.EstruturaDescricao ?? null,
+      Email: raw.Email ?? null,
       DuplicarDemitido: false,
     };
+
+    for (const key of passthrough) {
+      payload[key] = raw[key] ?? null;
+    }
+
 
     if (fieldKind === "horario" && newOption) {
       const h = horarios.find((o) => o.id === newOption.id);
