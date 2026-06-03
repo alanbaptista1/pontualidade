@@ -25,7 +25,7 @@ import type { SecullumFuncionario } from "@/types/secullum";
 
 const DELAY_MS = 1500;
 
-type FieldKind = "estrutura" | "horario";
+type FieldKind = "estrutura" | "horario" | "centroCustos";
 
 interface OptionItem {
   id: number;
@@ -45,6 +45,12 @@ const getEstrutura = (f: SecullumFuncionario): { Id: number; Descricao: string }
   const e = (f as { Estrutura?: { Id?: number; Descricao?: string } }).Estrutura;
   if (e && typeof e.Id === "number") return { Id: e.Id, Descricao: e.Descricao ?? `#${e.Id}` };
   return null;
+};
+
+const getCentrosCustos = (f: SecullumFuncionario): string[] => {
+  const list = (f as { ListaCentroDeCustos?: Array<{ Descricao?: string }> }).ListaCentroDeCustos;
+  if (!Array.isArray(list)) return [];
+  return list.map((c) => (c?.Descricao ?? "").trim()).filter(Boolean);
 };
 
 const BulkUpdatesPage = () => {
