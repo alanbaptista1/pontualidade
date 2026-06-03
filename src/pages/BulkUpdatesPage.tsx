@@ -25,7 +25,7 @@ import type { SecullumFuncionario } from "@/types/secullum";
 
 const DELAY_MS = 1500;
 
-type FieldKind = "estrutura" | "horario";
+type FieldKind = "estrutura" | "horario" | "centroCustos";
 
 interface OptionItem {
   id: number;
@@ -47,6 +47,12 @@ const getEstrutura = (f: SecullumFuncionario): { Id: number; Descricao: string }
   return null;
 };
 
+const getCentrosCustos = (f: SecullumFuncionario): string[] => {
+  const list = (f as { ListaCentroDeCustos?: Array<{ Descricao?: string }> }).ListaCentroDeCustos;
+  if (!Array.isArray(list)) return [];
+  return list.map((c) => (c?.Descricao ?? "").trim()).filter(Boolean);
+};
+
 const BulkUpdatesPage = () => {
   const { auth } = useSecullum();
   const { toast } = useToast();
@@ -60,6 +66,7 @@ const BulkUpdatesPage = () => {
 
   const [fieldKind, setFieldKind] = useState<FieldKind>("horario");
   const [newValueId, setNewValueId] = useState<string>("");
+  const [selectedCentrosCustos, setSelectedCentrosCustos] = useState<Set<string>>(new Set());
 
   const [executing, setExecuting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -111,6 +118,12 @@ const BulkUpdatesPage = () => {
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
+  const centrosCustosDisponiveis = useMemo<string[]>(() => {
+    const set = new Set<string>();
+    funcionarios.forEach((f) => getCentrosCustos(f).forEach((d) => set.add(d)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [funcionarios]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return funcionarios.filter((f) => {
@@ -145,10 +158,20 @@ const BulkUpdatesPage = () => {
     setSelected(next);
   };
 
-  const currentOptions = fieldKind === "estrutura" ? estruturas : horarios;
+  const currentOptions = fieldKind === "estrutura" ? estruturas : fieldKind === "horario" ? horarios : [];
   const newOption = currentOptions.find((o) => String(o.id) === newValueId);
 
   const targets = funcionarios.filter((f) => selected.has(f.Id));
+
+  const hasChange =
+    fieldKind === "centroCustos" ? selectedCentrosCustos.size > 0 : !!newOption;
+
+  const toggleCentroCusto = (descricao: string) => {
+    const next = new Set(selectedCentrosCustos);
+    if (next.has(descricao)) next.delete(descricao);
+    else next.add(descricao);
+    setSelectedCentrosCustos(next);
+  };
 
   const buildMinimalPayload = (f: SecullumFuncionario): Record<string, unknown> => {
     const horario = f.Horario as { Numero?: number } | undefined;
@@ -177,12 +200,18 @@ const BulkUpdatesPage = () => {
       payload.HorarioNumero = h?.numero ?? newOption.id;
     } else if (fieldKind === "estrutura" && newOption) {
       payload.EstruturaDescricao = newOption.label;
+    } else if (fieldKind === "centroCustos") {
+      // Mantém os centros já vinculados ao funcionário e adiciona os novos selecionados (sem duplicar)
+      const existentes = getCentrosCustos(f);
+      const merged = new Set<string>(existentes);
+      selectedCentrosCustos.forEach((d) => merged.add(d));
+      payload.ListaCentroDeCustos = Array.from(merged).map((Descricao) => ({ Descricao }));
     }
     return payload;
   };
 
   const handleExecute = async () => {
-    if (!auth || !newOption || targets.length === 0) return;
+    if (!auth || !hasChange || targets.length === 0) return;
     setExecuting(true);
     setResults([]);
     setProgress(0);
@@ -368,26 +397,68 @@ const BulkUpdatesPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Campo a alterar</Label>
-                <Select value={fieldKind} onValueChange={(v) => { setFieldKind(v as FieldKind); setNewValueId(""); }}>
+                <Select
+                  value={fieldKind}
+                  onValueChange={(v) => {
+                    setFieldKind(v as FieldKind);
+                    setNewValueId("");
+                    setSelectedCentrosCustos(new Set());
+                  }}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="horario">Horário</SelectItem>
                     <SelectItem value="estrutura">Estrutura</SelectItem>
+                    <SelectItem value="centroCustos">Centro de custos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Novo valor</Label>
-                <Select value={newValueId} onValueChange={setNewValueId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {currentOptions.map((o) => (
-                      <SelectItem key={o.id} value={String(o.id)}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {fieldKind !== "centroCustos" ? (
+                <div className="space-y-2">
+                  <Label>Novo valor</Label>
+                  <Select value={newValueId} onValueChange={setNewValueId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {currentOptions.map((o) => (
+                        <SelectItem key={o.id} value={String(o.id)}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Centros de custos a adicionar ({selectedCentrosCustos.size} selecionado(s))</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Os centros já vinculados ao colaborador são preservados. Apenas os novos serão adicionados.
+                  </p>
+                </div>
+              )}
             </div>
+
+            {fieldKind === "centroCustos" && (
+              <div className="max-h-64 overflow-auto rounded-md border border-border p-3">
+                {centrosCustosDisponiveis.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhum centro de custo encontrado nos colaboradores carregados.
+                  </p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {centrosCustosDisponiveis.map((d) => (
+                      <label
+                        key={d}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={selectedCentrosCustos.has(d)}
+                          onCheckedChange={() => toggleCentroCusto(d)}
+                        />
+                        <span className="text-sm">{d}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3">
               <div className="text-sm">
@@ -404,7 +475,7 @@ const BulkUpdatesPage = () => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button disabled={!newOption || targets.length === 0 || executing}>
+                  <Button disabled={!hasChange || targets.length === 0 || executing}>
                     {executing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                     Aplicar alteração
                   </Button>
@@ -414,10 +485,19 @@ const BulkUpdatesPage = () => {
                     <AlertDialogTitle>Confirmar alteração em massa</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-2">
-                        <p>
-                          Você está prestes a alterar o campo <strong>{fieldKind === "horario" ? "Horário" : "Estrutura"}</strong>{" "}
-                          para <strong>{newOption?.label}</strong> em <strong>{targets.length}</strong> colaborador(es).
-                        </p>
+                        {fieldKind === "centroCustos" ? (
+                          <p>
+                            Você vai <strong>adicionar</strong> os centros de custos{" "}
+                            <strong>{Array.from(selectedCentrosCustos).join(", ")}</strong> em{" "}
+                            <strong>{targets.length}</strong> colaborador(es), preservando os já existentes.
+                          </p>
+                        ) : (
+                          <p>
+                            Você está prestes a alterar o campo{" "}
+                            <strong>{fieldKind === "horario" ? "Horário" : "Estrutura"}</strong> para{" "}
+                            <strong>{newOption?.label}</strong> em <strong>{targets.length}</strong> colaborador(es).
+                          </p>
+                        )}
                         <p className="text-xs">Esta ação é aplicada diretamente na Secullum e não pode ser desfeita automaticamente.</p>
                       </div>
                     </AlertDialogDescription>
