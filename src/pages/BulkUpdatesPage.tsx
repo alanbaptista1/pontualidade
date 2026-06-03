@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSecullum } from "@/contexts/SecullumContext";
-import { listFuncionarios, updateFuncionario } from "@/lib/secullum-api";
+import { listFuncionarios, upsertFuncionario } from "@/lib/secullum-api";
 import type { SecullumFuncionario } from "@/types/secullum";
 
 const DELAY_MS = 1500;
