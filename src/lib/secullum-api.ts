@@ -87,6 +87,21 @@ export async function listBatidas(
   return callProxy("api-request", { token, bankId, endpoint });
 }
 
+export async function updateFuncionario(
+  token: string,
+  bankId: number,
+  funcionarioId: number,
+  payload: Record<string, unknown>
+): Promise<unknown> {
+  return callProxy("api-request", {
+    token,
+    bankId,
+    endpoint: `Funcionarios/${funcionarioId}`,
+    method: "PUT",
+    body: payload,
+  }, 1);
+}
+
 export async function getHorario(
   token: string,
   bankId: number,
