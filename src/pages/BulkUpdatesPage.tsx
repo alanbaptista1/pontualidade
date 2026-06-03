@@ -158,10 +158,20 @@ const BulkUpdatesPage = () => {
     setSelected(next);
   };
 
-  const currentOptions = fieldKind === "estrutura" ? estruturas : horarios;
+  const currentOptions = fieldKind === "estrutura" ? estruturas : fieldKind === "horario" ? horarios : [];
   const newOption = currentOptions.find((o) => String(o.id) === newValueId);
 
   const targets = funcionarios.filter((f) => selected.has(f.Id));
+
+  const hasChange =
+    fieldKind === "centroCustos" ? selectedCentrosCustos.size > 0 : !!newOption;
+
+  const toggleCentroCusto = (descricao: string) => {
+    const next = new Set(selectedCentrosCustos);
+    if (next.has(descricao)) next.delete(descricao);
+    else next.add(descricao);
+    setSelectedCentrosCustos(next);
+  };
 
   const buildMinimalPayload = (f: SecullumFuncionario): Record<string, unknown> => {
     const horario = f.Horario as { Numero?: number } | undefined;
@@ -190,12 +200,18 @@ const BulkUpdatesPage = () => {
       payload.HorarioNumero = h?.numero ?? newOption.id;
     } else if (fieldKind === "estrutura" && newOption) {
       payload.EstruturaDescricao = newOption.label;
+    } else if (fieldKind === "centroCustos") {
+      // Mantém os centros já vinculados ao funcionário e adiciona os novos selecionados (sem duplicar)
+      const existentes = getCentrosCustos(f);
+      const merged = new Set<string>(existentes);
+      selectedCentrosCustos.forEach((d) => merged.add(d));
+      payload.ListaCentroDeCustos = Array.from(merged).map((Descricao) => ({ Descricao }));
     }
     return payload;
   };
 
   const handleExecute = async () => {
-    if (!auth || !newOption || targets.length === 0) return;
+    if (!auth || !hasChange || targets.length === 0) return;
     setExecuting(true);
     setResults([]);
     setProgress(0);
