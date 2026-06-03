@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSecullum } from "@/contexts/SecullumContext";
-import { listFuncionarios, updateFuncionario } from "@/lib/secullum-api";
+import { listFuncionarios, upsertFuncionario } from "@/lib/secullum-api";
 import type { SecullumFuncionario } from "@/types/secullum";
 
 const DELAY_MS = 1500;
@@ -96,12 +96,19 @@ const BulkUpdatesPage = () => {
     return Array.from(map.entries()).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
-  const horarios = useMemo<OptionItem[]>(() => {
-    const map = new Map<number, string>();
+  const horarios = useMemo<Array<OptionItem & { numero: number }>>(() => {
+    const map = new Map<number, { label: string; numero: number }>();
     funcionarios.forEach((f) => {
-      if (f.Horario?.Id) map.set(f.Horario.Id, f.Horario.Descricao ?? `#${f.Horario.Id}`);
+      if (f.Horario?.Id) {
+        map.set(f.Horario.Id, {
+          label: f.Horario.Descricao ?? `#${f.Horario.Id}`,
+          numero: f.Horario.Numero ?? 0,
+        });
+      }
     });
-    return Array.from(map.entries()).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(map.entries())
+      .map(([id, v]) => ({ id, label: v.label, numero: v.numero }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [funcionarios]);
 
   const filtered = useMemo(() => {
@@ -143,14 +150,33 @@ const BulkUpdatesPage = () => {
 
   const targets = funcionarios.filter((f) => selected.has(f.Id));
 
-  const buildUpdatedPayload = (f: SecullumFuncionario): Record<string, unknown> => {
-    const payload: Record<string, unknown> = { ...f };
+  const buildMinimalPayload = (f: SecullumFuncionario): Record<string, unknown> => {
+    const horario = f.Horario as { Numero?: number } | undefined;
+    const departamento = f.Departamento as { Descricao?: string } | undefined;
+    const funcao = f.Funcao as { Descricao?: string } | undefined;
+    const empresa = (f as { Empresa?: { Documento?: string } }).Empresa;
+    const estrutura = getEstrutura(f);
+
+    const payload: Record<string, unknown> = {
+      Nome: f.Nome ?? null,
+      NumeroFolha: f.NumeroFolha ?? null,
+      NumeroIdentificador: (f as { NumeroIdentificador?: unknown }).NumeroIdentificador ?? null,
+      Cpf: f.Cpf ?? null,
+      Admissao: (f as { Admissao?: unknown }).Admissao ?? null,
+      EmpresaCnpjCpf: empresa?.Documento ?? (f as { EmpresaCnpjCpf?: unknown }).EmpresaCnpjCpf ?? null,
+      HorarioNumero: horario?.Numero ?? (f as { HorarioNumero?: unknown }).HorarioNumero ?? null,
+      DepartamentoDescricao: departamento?.Descricao ?? (f as { DepartamentoDescricao?: unknown }).DepartamentoDescricao ?? null,
+      FuncaoDescricao: funcao?.Descricao ?? (f as { FuncaoDescricao?: unknown }).FuncaoDescricao ?? null,
+      EstruturaDescricao: estrutura?.Descricao ?? (f as { EstruturaDescricao?: unknown }).EstruturaDescricao ?? null,
+      Email: (f as { Email?: unknown }).Email ?? null,
+      DuplicarDemitido: false,
+    };
+
     if (fieldKind === "horario" && newOption) {
-      payload.HorarioId = newOption.id;
-      payload.Horario = { Id: newOption.id, Numero: 0, Descricao: newOption.label };
+      const h = horarios.find((o) => o.id === newOption.id);
+      payload.HorarioNumero = h?.numero ?? newOption.id;
     } else if (fieldKind === "estrutura" && newOption) {
-      payload.EstruturaId = newOption.id;
-      payload.Estrutura = { Id: newOption.id, Descricao: newOption.label };
+      payload.EstruturaDescricao = newOption.label;
     }
     return payload;
   };
@@ -165,7 +191,7 @@ const BulkUpdatesPage = () => {
     for (let i = 0; i < targets.length; i++) {
       const f = targets[i];
       try {
-        await updateFuncionario(auth.token, auth.bankId, f.Id, buildUpdatedPayload(f));
+        await upsertFuncionario(auth.token, auth.bankId, buildMinimalPayload(f));
         out.push({ funcionarioId: f.Id, nome: f.Nome, ok: true });
       } catch (e) {
         out.push({
