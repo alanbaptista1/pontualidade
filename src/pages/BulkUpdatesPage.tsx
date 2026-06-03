@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Search, Layers, RefreshCw, Check, AlertCircle, Play } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
-import BankSelector from "@/components/BankSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -202,9 +201,6 @@ const BulkUpdatesPage = () => {
             <AlertTitle>Conecte ao Secullum</AlertTitle>
             <AlertDescription>Faça login na tela inicial e selecione um banco para usar a alteração em massa.</AlertDescription>
           </Alert>
-          <div className="mt-6">
-            <BankSelector />
-          </div>
         </main>
       </div>
     );
