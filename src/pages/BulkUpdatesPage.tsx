@@ -226,6 +226,9 @@ const BulkUpdatesPage = () => {
       payload[key] = raw[key] ?? null;
     }
 
+    // Cidade vem como objeto { Id, Descricao } e precisa ir como string Descricao
+    const cidadeObj = raw.Cidade as { Descricao?: string } | undefined;
+    payload.Cidade = cidadeObj?.Descricao ?? raw.Cidade ?? null;
 
     if (fieldKind === "horario" && newOption) {
       const h = horarios.find((o) => o.id === newOption.id);
