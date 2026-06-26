@@ -58,6 +58,7 @@ export default function CustomReportsPage() {
   const [dataFim, setDataFim] = useState("");
   const [funcionarioCpf, setFuncionarioCpf] = useState<string>("all");
   const [equipamentoFiltro, setEquipamentoFiltro] = useState<string>("all");
+  const [incluirDemitidos, setIncluirDemitidos] = useState(false);
 
   const [executing, setExecuting] = useState(false);
   const [results, setResults] = useState<FonteDadosRow[] | null>(null);
