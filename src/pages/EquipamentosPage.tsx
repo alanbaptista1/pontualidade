@@ -87,7 +87,7 @@ export default function EquipamentosPage() {
             bank_id: auth.bankId,
             equipamento_id: id,
             descricao,
-            raw: obj as unknown as never,
+            raw: JSON.parse(JSON.stringify(obj)),
           };
         })
         .filter((r): r is NonNullable<typeof r> => r !== null);
