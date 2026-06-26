@@ -101,6 +101,14 @@ export default function CustomReportsPage() {
     return m;
   }, [equipamentos]);
 
+  const funcionarioByCpf = useMemo(() => {
+    const m = new Map<string, SecullumFuncionario>();
+    funcionarios.forEach((f) => {
+      if (f.Cpf) m.set(f.Cpf, f);
+    });
+    return m;
+  }, [funcionarios]);
+
   const equipamentosFaltando = equipamentos.length === 0;
 
   const handleExecutar = async () => {
@@ -113,10 +121,18 @@ export default function CustomReportsPage() {
       });
       return;
     }
-    if (!dataInicio || !dataFim || !funcionarioCpf) {
+    if (!dataInicio || !dataFim) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha Data Início, Data Fim e Funcionário.",
+        description: "Preencha Data Início e Data Fim.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (funcionarioCpf === "all" && equipamentoFiltro === "all") {
+      toast({
+        title: "Selecione um filtro",
+        description: "Informe um funcionário ou um equipamento.",
         variant: "destructive",
       });
       return;
@@ -130,7 +146,7 @@ export default function CustomReportsPage() {
       const data = await listFonteDados(auth.token, auth.bankId, {
         dataInicio,
         dataFim,
-        funcionarioCpf,
+        funcionarioCpf: funcionarioCpf !== "all" ? funcionarioCpf : undefined,
         equipamentoId,
       });
       setResults((data ?? []) as FonteDadosRow[]);
