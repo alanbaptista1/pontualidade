@@ -250,14 +250,15 @@ export default function CustomReportsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Funcionário (CPF) *</Label>
+              <Label>Funcionário (CPF)</Label>
               <Select value={funcionarioCpf} onValueChange={setFuncionarioCpf}>
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={loadingInit ? "Carregando..." : "Selecione o funcionário"}
+                    placeholder={loadingInit ? "Carregando..." : "Todos"}
                   />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
                   {funcionarios.map((f) => (
                     <SelectItem key={f.Id} value={f.Cpf ?? ""}>
                       {f.Nome} — {f.Cpf}
