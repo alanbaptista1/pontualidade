@@ -41,6 +41,7 @@ const App = () => (
                 <Route path="/atualizacoes-email" element={<ProtectedRoute><EmailUpdatesPage /></ProtectedRoute>} />
                 <Route path="/funcionarios" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />
                 <Route path="/atualizacoes-massa" element={<ProtectedRoute><BulkUpdatesPage /></ProtectedRoute>} />
+                <Route path="/equipamentos" element={<ProtectedRoute><EquipamentosPage /></ProtectedRoute>} />
                 <Route path="/publico/atualizar-email/:userId" element={<PublicEmailUpdatePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
