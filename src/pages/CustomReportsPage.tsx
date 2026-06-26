@@ -166,14 +166,8 @@ export default function CustomReportsPage() {
       });
       return;
     }
-    if (funcionarioCpf === "all" && equipamentoFiltro === "all") {
-      toast({
-        title: "Selecione um filtro",
-        description: "Informe um funcionário ou um equipamento.",
-        variant: "destructive",
-      });
-      return;
-    }
+
+
 
     setExecuting(true);
     setResults(null);
