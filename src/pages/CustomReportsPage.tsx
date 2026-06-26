@@ -323,15 +323,21 @@ export default function CustomReportsPage() {
                       <TableHead>Data</TableHead>
                       <TableHead>Hora</TableHead>
                       <TableHead>CPF</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Departamento</TableHead>
                       <TableHead>Equipamento</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((r, i) => (
+                    {results.map((r, i) => {
+                      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
+                      return (
                       <TableRow key={r.Id ?? i}>
                         <TableCell>{formatData(r.Data)}</TableCell>
                         <TableCell className="font-medium">{r.Hora ?? "—"}</TableCell>
                         <TableCell>{r.FuncionarioCpf ?? "—"}</TableCell>
+                        <TableCell>{func?.Nome ?? "—"}</TableCell>
+                        <TableCell>{func?.Departamento?.Descricao ?? "—"}</TableCell>
                         <TableCell>
                           {r.EquipamentoId !== undefined ? (
                             <span className="flex items-center gap-2">
@@ -345,7 +351,8 @@ export default function CustomReportsPage() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
