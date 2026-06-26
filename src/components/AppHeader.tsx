@@ -69,6 +69,7 @@ const AppHeader = () => {
     { label: "Atualizações", path: "/atualizacoes-email", icon: Mail },
     { label: "Funcionários", path: "/funcionarios", icon: Users },
     { label: "Alt. em massa", path: "/atualizacoes-massa", icon: Layers },
+    { label: "Equipamentos", path: "/equipamentos", icon: HardDrive },
     { label: "Conta", path: "/conta", icon: UserCog },
   ];
 
