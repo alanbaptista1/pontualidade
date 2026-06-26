@@ -357,16 +357,37 @@ export default function CustomReportsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Hora</TableHead>
-                      <TableHead>CPF</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Departamento</TableHead>
-                      <TableHead>Equipamento</TableHead>
+                      {([
+                        ["Data", "Data"],
+                        ["Hora", "Hora"],
+                        ["FuncionarioCpf", "CPF"],
+                        ["Nome", "Nome"],
+                        ["Departamento", "Departamento"],
+                        ["Equipamento", "Equipamento"],
+                      ] as [SortKey, string][]).map(([key, label]) => (
+                        <TableHead
+                          key={key}
+                          onClick={() => toggleSort(key)}
+                          className="cursor-pointer select-none hover:bg-muted/50"
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {label}
+                            {sortKey === key ? (
+                              sortDir === "asc" ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 opacity-40" />
+                            )}
+                          </span>
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((r, i) => {
+                    {(sortedResults ?? results).map((r, i) => {
                       const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
                       return (
                       <TableRow key={r.Id ?? i}>
