@@ -101,6 +101,17 @@ export async function upsertFuncionario(
   }, 1);
 }
 
+export async function listEquipamentos(
+  token: string,
+  bankId: number
+): Promise<Array<Record<string, unknown>>> {
+  return callProxy("api-request", {
+    token,
+    bankId,
+    endpoint: "Equipamentos",
+  });
+}
+
 export async function getHorario(
   token: string,
   bankId: number,
