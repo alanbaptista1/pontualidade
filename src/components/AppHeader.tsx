@@ -70,6 +70,7 @@ const AppHeader = () => {
     { label: "Funcionários", path: "/funcionarios", icon: Users },
     { label: "Alt. em massa", path: "/atualizacoes-massa", icon: Layers },
     { label: "Equipamentos", path: "/equipamentos", icon: HardDrive },
+    { label: "Rel. Personalizados", path: "/relatorios-personalizados", icon: FileBarChart },
     { label: "Conta", path: "/conta", icon: UserCog },
   ];
 
