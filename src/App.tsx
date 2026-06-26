@@ -16,6 +16,7 @@ import EmailUpdatesPage from "./pages/EmailUpdatesPage";
 import EmployeesListPage from "./pages/EmployeesListPage";
 import BulkUpdatesPage from "./pages/BulkUpdatesPage";
 import EquipamentosPage from "./pages/EquipamentosPage";
+import CustomReportsPage from "./pages/CustomReportsPage";
 import PublicEmailUpdatePage from "./pages/PublicEmailUpdatePage";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/components/ThemeProvider";
