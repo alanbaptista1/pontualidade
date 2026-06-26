@@ -60,6 +60,18 @@ export default function CustomReportsPage() {
 
   const [executing, setExecuting] = useState(false);
   const [results, setResults] = useState<FonteDadosRow[] | null>(null);
+  type SortKey = "Data" | "Hora" | "FuncionarioCpf" | "Nome" | "Departamento" | "Equipamento";
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   useEffect(() => {
     if (!auth) navigate("/");
