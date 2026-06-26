@@ -55,7 +55,7 @@ export default function CustomReportsPage() {
 
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [funcionarioCpf, setFuncionarioCpf] = useState<string>("");
+  const [funcionarioCpf, setFuncionarioCpf] = useState<string>("all");
   const [equipamentoFiltro, setEquipamentoFiltro] = useState<string>("all");
 
   const [executing, setExecuting] = useState(false);
@@ -101,6 +101,14 @@ export default function CustomReportsPage() {
     return m;
   }, [equipamentos]);
 
+  const funcionarioByCpf = useMemo(() => {
+    const m = new Map<string, SecullumFuncionario>();
+    funcionarios.forEach((f) => {
+      if (f.Cpf) m.set(f.Cpf, f);
+    });
+    return m;
+  }, [funcionarios]);
+
   const equipamentosFaltando = equipamentos.length === 0;
 
   const handleExecutar = async () => {
@@ -113,10 +121,18 @@ export default function CustomReportsPage() {
       });
       return;
     }
-    if (!dataInicio || !dataFim || !funcionarioCpf) {
+    if (!dataInicio || !dataFim) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha Data Início, Data Fim e Funcionário.",
+        description: "Preencha Data Início e Data Fim.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (funcionarioCpf === "all" && equipamentoFiltro === "all") {
+      toast({
+        title: "Selecione um filtro",
+        description: "Informe um funcionário ou um equipamento.",
         variant: "destructive",
       });
       return;
@@ -130,7 +146,7 @@ export default function CustomReportsPage() {
       const data = await listFonteDados(auth.token, auth.bankId, {
         dataInicio,
         dataFim,
-        funcionarioCpf,
+        funcionarioCpf: funcionarioCpf !== "all" ? funcionarioCpf : undefined,
         equipamentoId,
       });
       setResults((data ?? []) as FonteDadosRow[]);
@@ -153,15 +169,18 @@ export default function CustomReportsPage() {
 
   const handleExportCsv = () => {
     if (!results || results.length === 0) return;
-    const header = ["Data", "Hora", "CPF", "Equipamento ID", "Equipamento"];
+    const header = ["Data", "Hora", "CPF", "Nome", "Departamento", "Equipamento ID", "Equipamento"];
     const lines = [header.join(";")];
     results.forEach((r) => {
       const eqDesc = r.EquipamentoId !== undefined ? equipamentoMap.get(r.EquipamentoId) ?? "" : "";
+      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
       lines.push(
         [
           formatData(r.Data),
           r.Hora ?? "",
           r.FuncionarioCpf ?? "",
+          func?.Nome ?? "",
+          func?.Departamento?.Descricao ?? "",
           r.EquipamentoId ?? "",
           eqDesc,
         ]
@@ -231,14 +250,15 @@ export default function CustomReportsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Funcionário (CPF) *</Label>
+              <Label>Funcionário (CPF)</Label>
               <Select value={funcionarioCpf} onValueChange={setFuncionarioCpf}>
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={loadingInit ? "Carregando..." : "Selecione o funcionário"}
+                    placeholder={loadingInit ? "Carregando..." : "Todos"}
                   />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
                   {funcionarios.map((f) => (
                     <SelectItem key={f.Id} value={f.Cpf ?? ""}>
                       {f.Nome} — {f.Cpf}
@@ -303,15 +323,21 @@ export default function CustomReportsPage() {
                       <TableHead>Data</TableHead>
                       <TableHead>Hora</TableHead>
                       <TableHead>CPF</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Departamento</TableHead>
                       <TableHead>Equipamento</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((r, i) => (
+                    {results.map((r, i) => {
+                      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
+                      return (
                       <TableRow key={r.Id ?? i}>
                         <TableCell>{formatData(r.Data)}</TableCell>
                         <TableCell className="font-medium">{r.Hora ?? "—"}</TableCell>
                         <TableCell>{r.FuncionarioCpf ?? "—"}</TableCell>
+                        <TableCell>{func?.Nome ?? "—"}</TableCell>
+                        <TableCell>{func?.Departamento?.Descricao ?? "—"}</TableCell>
                         <TableCell>
                           {r.EquipamentoId !== undefined ? (
                             <span className="flex items-center gap-2">
@@ -325,7 +351,8 @@ export default function CustomReportsPage() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
