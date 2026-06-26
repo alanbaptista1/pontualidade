@@ -55,7 +55,7 @@ export default function CustomReportsPage() {
 
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [funcionarioCpf, setFuncionarioCpf] = useState<string>("");
+  const [funcionarioCpf, setFuncionarioCpf] = useState<string>("all");
   const [equipamentoFiltro, setEquipamentoFiltro] = useState<string>("all");
 
   const [executing, setExecuting] = useState(false);
