@@ -292,11 +292,14 @@ export default function CustomReportsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  {funcionarios.map((f) => (
-                    <SelectItem key={f.Id} value={f.Cpf ?? ""}>
-                      {f.Nome} — {f.Cpf}
-                    </SelectItem>
-                  ))}
+                  {funcionarios
+                    .filter((f) => incluirDemitidos || !f.Invisivel)
+                    .map((f) => (
+                      <SelectItem key={f.Id} value={f.Cpf ?? ""}>
+                        {f.Nome} — {f.Cpf}
+                        {f.Invisivel ? " (demitido)" : ""}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
