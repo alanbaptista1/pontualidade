@@ -1,6 +1,6 @@
 ﻿import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BarChart3, CalendarClock, Clock, FileText, HardDrive, LifeBuoy, LogOut, Mail, UserCog, Users, Layers } from "lucide-react";
+import { BarChart3, CalendarClock, Clock, FileBarChart, FileText, HardDrive, LifeBuoy, LogOut, Mail, UserCog, Users, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -70,6 +70,7 @@ const AppHeader = () => {
     { label: "Funcionários", path: "/funcionarios", icon: Users },
     { label: "Alt. em massa", path: "/atualizacoes-massa", icon: Layers },
     { label: "Equipamentos", path: "/equipamentos", icon: HardDrive },
+    { label: "Rel. Personalizados", path: "/relatorios-personalizados", icon: FileBarChart },
     { label: "Conta", path: "/conta", icon: UserCog },
   ];
 

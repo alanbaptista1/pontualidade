@@ -16,6 +16,7 @@ import EmailUpdatesPage from "./pages/EmailUpdatesPage";
 import EmployeesListPage from "./pages/EmployeesListPage";
 import BulkUpdatesPage from "./pages/BulkUpdatesPage";
 import EquipamentosPage from "./pages/EquipamentosPage";
+import CustomReportsPage from "./pages/CustomReportsPage";
 import PublicEmailUpdatePage from "./pages/PublicEmailUpdatePage";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/funcionarios" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />
                 <Route path="/atualizacoes-massa" element={<ProtectedRoute><BulkUpdatesPage /></ProtectedRoute>} />
                 <Route path="/equipamentos" element={<ProtectedRoute><EquipamentosPage /></ProtectedRoute>} />
+                <Route path="/relatorios-personalizados" element={<ProtectedRoute><CustomReportsPage /></ProtectedRoute>} />
                 <Route path="/publico/atualizar-email/:userId" element={<PublicEmailUpdatePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

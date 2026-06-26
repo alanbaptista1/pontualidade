@@ -112,6 +112,30 @@ export async function listEquipamentos(
   });
 }
 
+export async function listFonteDados(
+  token: string,
+  bankId: number,
+  params: {
+    dataInicio: string;
+    dataFim: string;
+    funcionarioCpf: string;
+    equipamentoId?: number;
+  }
+): Promise<Array<Record<string, unknown>>> {
+  const qs = new URLSearchParams();
+  qs.set("DataInicio", params.dataInicio);
+  qs.set("DataFim", params.dataFim);
+  qs.set("FuncionarioCpf", params.funcionarioCpf);
+  if (params.equipamentoId !== undefined) {
+    qs.set("EquipamentoId", String(params.equipamentoId));
+  }
+  return callProxy("api-request", {
+    token,
+    bankId,
+    endpoint: `FonteDados?${qs.toString()}`,
+  });
+}
+
 export async function getHorario(
   token: string,
   bankId: number,
