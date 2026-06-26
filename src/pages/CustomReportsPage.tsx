@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileBarChart, Loader2, Play, AlertTriangle, Download } from "lucide-react";
+import { FileBarChart, Loader2, Play, AlertTriangle, Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
