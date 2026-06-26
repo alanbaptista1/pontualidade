@@ -346,6 +346,39 @@ export type Database = {
         }
         Relationships: []
       }
+      secullum_equipamentos: {
+        Row: {
+          bank_id: number
+          created_at: string
+          descricao: string | null
+          equipamento_id: number
+          id: string
+          raw: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_id: number
+          created_at?: string
+          descricao?: string | null
+          equipamento_id: number
+          id?: string
+          raw?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_id?: number
+          created_at?: string
+          descricao?: string | null
+          equipamento_id?: number
+          id?: string
+          raw?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
