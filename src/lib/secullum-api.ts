@@ -118,14 +118,16 @@ export async function listFonteDados(
   params: {
     dataInicio: string;
     dataFim: string;
-    funcionarioCpf: string;
+    funcionarioCpf?: string;
     equipamentoId?: number;
   }
 ): Promise<Array<Record<string, unknown>>> {
   const qs = new URLSearchParams();
   qs.set("DataInicio", params.dataInicio);
   qs.set("DataFim", params.dataFim);
-  qs.set("FuncionarioCpf", params.funcionarioCpf);
+  if (params.funcionarioCpf) {
+    qs.set("FuncionarioCpf", params.funcionarioCpf);
+  }
   if (params.equipamentoId !== undefined) {
     qs.set("EquipamentoId", String(params.equipamentoId));
   }
