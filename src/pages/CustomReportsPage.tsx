@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useSecullum } from "@/contexts/SecullumContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,7 @@ export default function CustomReportsPage() {
   const [dataFim, setDataFim] = useState("");
   const [funcionarioCpf, setFuncionarioCpf] = useState<string>("all");
   const [equipamentoFiltro, setEquipamentoFiltro] = useState<string>("all");
+  const [incluirDemitidos, setIncluirDemitidos] = useState(false);
 
   const [executing, setExecuting] = useState(false);
   const [results, setResults] = useState<FonteDadosRow[] | null>(null);
@@ -290,11 +292,14 @@ export default function CustomReportsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  {funcionarios.map((f) => (
-                    <SelectItem key={f.Id} value={f.Cpf ?? ""}>
-                      {f.Nome} — {f.Cpf}
-                    </SelectItem>
-                  ))}
+                  {funcionarios
+                    .filter((f) => incluirDemitidos || !f.Invisivel)
+                    .map((f) => (
+                      <SelectItem key={f.Id} value={f.Cpf ?? ""}>
+                        {f.Nome} — {f.Cpf}
+                        {f.Invisivel ? " (demitido)" : ""}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -315,7 +320,21 @@ export default function CustomReportsPage() {
               </Select>
             </div>
 
-            <div className="md:col-span-2 lg:col-span-4 flex justify-end">
+            <div className="md:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={incluirDemitidos}
+                  onCheckedChange={(v) => {
+                    const next = v === true;
+                    setIncluirDemitidos(next);
+                    if (!next && funcionarioCpf !== "all") {
+                      const f = funcionarios.find((x) => x.Cpf === funcionarioCpf);
+                      if (f?.Invisivel) setFuncionarioCpf("all");
+                    }
+                  }}
+                />
+                Incluir funcionários demitidos
+              </label>
               <Button onClick={handleExecutar} disabled={executing || equipamentosFaltando}>
                 {executing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
