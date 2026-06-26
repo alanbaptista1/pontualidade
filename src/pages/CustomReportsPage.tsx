@@ -123,6 +123,31 @@ export default function CustomReportsPage() {
 
   const equipamentosFaltando = equipamentos.length === 0;
 
+  const sortedResults = useMemo(() => {
+    if (!results) return null;
+    if (!sortKey) return results;
+    const arr = [...results];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const getVal = (r: FonteDadosRow): string | number => {
+      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
+      switch (sortKey) {
+        case "Data": return r.Data ?? "";
+        case "Hora": return r.Hora ?? "";
+        case "FuncionarioCpf": return r.FuncionarioCpf ?? "";
+        case "Nome": return func?.Nome ?? "";
+        case "Departamento": return func?.Departamento?.Descricao ?? "";
+        case "Equipamento": return r.EquipamentoId ?? -1;
+      }
+    };
+    arr.sort((a, b) => {
+      const va = getVal(a); const vb = getVal(b);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), "pt-BR", { numeric: true }) * dir;
+    });
+    return arr;
+  }, [results, sortKey, sortDir, funcionarioByCpf]);
+
+
   const handleExecutar = async () => {
     if (!auth) return;
     if (equipamentosFaltando) {
