@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileBarChart, Loader2, Play, AlertTriangle, Download } from "lucide-react";
+import { FileBarChart, Loader2, Play, AlertTriangle, Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +60,18 @@ export default function CustomReportsPage() {
 
   const [executing, setExecuting] = useState(false);
   const [results, setResults] = useState<FonteDadosRow[] | null>(null);
+  type SortKey = "Data" | "Hora" | "FuncionarioCpf" | "Nome" | "Departamento" | "Equipamento";
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   useEffect(() => {
     if (!auth) navigate("/");
@@ -110,6 +122,31 @@ export default function CustomReportsPage() {
   }, [funcionarios]);
 
   const equipamentosFaltando = equipamentos.length === 0;
+
+  const sortedResults = useMemo(() => {
+    if (!results) return null;
+    if (!sortKey) return results;
+    const arr = [...results];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const getVal = (r: FonteDadosRow): string | number => {
+      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
+      switch (sortKey) {
+        case "Data": return r.Data ?? "";
+        case "Hora": return r.Hora ?? "";
+        case "FuncionarioCpf": return r.FuncionarioCpf ?? "";
+        case "Nome": return func?.Nome ?? "";
+        case "Departamento": return func?.Departamento?.Descricao ?? "";
+        case "Equipamento": return r.EquipamentoId ?? -1;
+      }
+    };
+    arr.sort((a, b) => {
+      const va = getVal(a); const vb = getVal(b);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), "pt-BR", { numeric: true }) * dir;
+    });
+    return arr;
+  }, [results, sortKey, sortDir, funcionarioByCpf]);
+
 
   const handleExecutar = async () => {
     if (!auth) return;
@@ -320,16 +357,37 @@ export default function CustomReportsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Hora</TableHead>
-                      <TableHead>CPF</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Departamento</TableHead>
-                      <TableHead>Equipamento</TableHead>
+                      {([
+                        ["Data", "Data"],
+                        ["Hora", "Hora"],
+                        ["FuncionarioCpf", "CPF"],
+                        ["Nome", "Nome"],
+                        ["Departamento", "Departamento"],
+                        ["Equipamento", "Equipamento"],
+                      ] as [SortKey, string][]).map(([key, label]) => (
+                        <TableHead
+                          key={key}
+                          onClick={() => toggleSort(key)}
+                          className="cursor-pointer select-none hover:bg-muted/50"
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {label}
+                            {sortKey === key ? (
+                              sortDir === "asc" ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 opacity-40" />
+                            )}
+                          </span>
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((r, i) => {
+                    {(sortedResults ?? results).map((r, i) => {
                       const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
                       return (
                       <TableRow key={r.Id ?? i}>
