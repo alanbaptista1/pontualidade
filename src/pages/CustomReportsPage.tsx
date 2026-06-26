@@ -169,15 +169,18 @@ export default function CustomReportsPage() {
 
   const handleExportCsv = () => {
     if (!results || results.length === 0) return;
-    const header = ["Data", "Hora", "CPF", "Equipamento ID", "Equipamento"];
+    const header = ["Data", "Hora", "CPF", "Nome", "Departamento", "Equipamento ID", "Equipamento"];
     const lines = [header.join(";")];
     results.forEach((r) => {
       const eqDesc = r.EquipamentoId !== undefined ? equipamentoMap.get(r.EquipamentoId) ?? "" : "";
+      const func = r.FuncionarioCpf ? funcionarioByCpf.get(r.FuncionarioCpf) : undefined;
       lines.push(
         [
           formatData(r.Data),
           r.Hora ?? "",
           r.FuncionarioCpf ?? "",
+          func?.Nome ?? "",
+          func?.Departamento?.Descricao ?? "",
           r.EquipamentoId ?? "",
           eqDesc,
         ]
