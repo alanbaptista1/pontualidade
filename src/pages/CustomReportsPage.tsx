@@ -320,7 +320,21 @@ export default function CustomReportsPage() {
               </Select>
             </div>
 
-            <div className="md:col-span-2 lg:col-span-4 flex justify-end">
+            <div className="md:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={incluirDemitidos}
+                  onCheckedChange={(v) => {
+                    const next = v === true;
+                    setIncluirDemitidos(next);
+                    if (!next && funcionarioCpf !== "all") {
+                      const f = funcionarios.find((x) => x.Cpf === funcionarioCpf);
+                      if (f?.Invisivel) setFuncionarioCpf("all");
+                    }
+                  }}
+                />
+                Incluir funcionários demitidos
+              </label>
               <Button onClick={handleExecutar} disabled={executing || equipamentosFaltando}>
                 {executing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
